@@ -1,7 +1,7 @@
 # IE498 project rules
 
 - Communicate with the user in Chinese; write repository documentation, code, seller/compressor prompts, and chart labels in English. Preserve the original supplied specification and historical quotations as source evidence.
-- The user removed the API spending cap; the formal matrix is fixed at 3 repeats per condition. Continue accounting for every call. API keys belong only in environment variables or an ignored `.env`.
+- The user removed the API spending cap; the formal matrix is fixed at 5 repeats per condition, plus 5 formal H100 paper-reference runs. Continue accounting for every call. API keys belong only in environment variables or an ignored `.env`.
 - Never rewrite historical bullets. Route all feedback through `visible_history`; H=0 must be empty.
 - Fix both seller inputs before concurrent calls in a round; commit settlement and both memory entries in one transaction.
 - Resume by logical call ID. Sample again in a new round even for identical prompts; never reuse outputs across runs.

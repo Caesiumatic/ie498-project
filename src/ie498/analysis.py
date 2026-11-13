@@ -43,6 +43,21 @@ def bootstrap(values,seed=498):
     return tuple(float(y) for y in np.quantile(draws,[.025,.975]))
 
 
+def condition_summary(g,mode,h):
+    k=int(g.effective_success.sum());n=len(g);lo,hi=wilson(k,n);cl,ch=bootstrap(g.CI)
+    aggregate=dict(mode=mode,H=int(h),n=n,successes=k,success_rate=k/n,wilson_low=lo,wilson_high=hi,
+                       mean_CI=float(g.CI.mean()),CI_bootstrap_low=cl,CI_bootstrap_high=ch,
+                       mean_price=float((g.price_0+g.price_1).mean()/2),mean_joint_profit=float(g.joint_profit.mean()))
+    for metric in ('price_0','price_1','profit_0','profit_1','joint_profit','price_std','price_gap'):
+        low,high=bootstrap(g[metric])
+        aggregate.update({f'{metric}_mean':float(g[metric].mean()),f'{metric}_bootstrap_low':low,f'{metric}_bootstrap_high':high})
+    for success in ('price_success','profit_success'):
+        successes=int(g[success].sum());low,high=wilson(successes,n)
+        aggregate.update({success+'_count':successes,success+'_rate':successes/n,
+                          success+'_wilson_low':low,success+'_wilson_high':high})
+    return aggregate
+
+
 def analyze(store,destination):
     out=Path(destination);out.mkdir(parents=True,exist_ok=True)
     runs=store.rows('SELECT * FROM runs ORDER BY id')
@@ -56,9 +71,12 @@ def analyze(store,destination):
         epochs=store.rows('SELECT DISTINCT commit_hash FROM execution_epochs WHERE run_id=?',(run['id'],)) if has_epochs else []
         row['execution_commits']=';'.join(sorted({run['commit_hash']}|{e['commit_hash'] for e in epochs}))
         row.update({k:c[k] for k in ('stage','provider','model','architecture','H','mode','T')})
+        row['repetition']=c.get('repetition')
         row['rounds_completed']=len(history);row['new_rounds']=len(owned)
         row.update(metrics(owned,c['evaluation_window'],c['epsilon_price'],c['ci_threshold'],c['price_fraction']))
-        row['eligible_primary']=run['status']=='completed' and c['stage']=='formation' and c['provider']=='openai' and len(owned)==c['T']
+        complete_live=run['status']=='completed' and c['provider']=='openai' and len(owned)==c['T']
+        row['eligible_primary']=complete_live and c['stage']=='formation' and c['architecture']=='bullet_memory'
+        row['eligible_reference']=complete_live and c['stage']=='formation_reference' and c['architecture']=='paper_reference' and c['H']==100 and c['mode']=='full'
         summary.append(row)
         for r in owned:
             for i in range(2):
@@ -101,18 +119,7 @@ def analyze(store,destination):
     if not df.empty:
         primary=df[df.eligible_primary]
         for (mode,h),g in primary.groupby(['mode','H']):
-            k=int(g.effective_success.sum());n=len(g);lo,hi=wilson(k,n);cl,ch=bootstrap(g.CI)
-            aggregate=dict(mode=mode,H=int(h),n=n,successes=k,success_rate=k/n,wilson_low=lo,wilson_high=hi,
-                               mean_CI=float(g.CI.mean()),CI_bootstrap_low=cl,CI_bootstrap_high=ch,
-                               mean_price=float((g.price_0+g.price_1).mean()/2),mean_joint_profit=float(g.joint_profit.mean()))
-            for metric in ('price_0','price_1','profit_0','profit_1','joint_profit','price_std','price_gap'):
-                low,high=bootstrap(g[metric])
-                aggregate.update({f'{metric}_mean':float(g[metric].mean()),f'{metric}_bootstrap_low':low,f'{metric}_bootstrap_high':high})
-            for success in ('price_success','profit_success'):
-                successes=int(g[success].sum());low,high=wilson(successes,n)
-                aggregate.update({success+'_count':successes,success+'_rate':successes/n,
-                                  success+'_wilson_low':low,success+'_wilson_high':high})
-            groups.append(aggregate)
+            groups.append(condition_summary(g,mode,h))
         for mode in ('clear','full','compressed'):
             eligible=[g for g in groups if g['mode']==mode and g['success_rate']>=.8]
             best=min(eligible,key=lambda g:g['H']) if eligible else None
@@ -120,6 +127,7 @@ def analyze(store,destination):
                                 evidence=best,interpretation='sample criterion; not a population threshold'))
     pd.DataFrame(groups).to_csv(out/'conditions.csv',index=False)
     atomic_json(out/'minimum_tested_effective_H.json',minimum)
+    reference_groups,comparison_groups=_reference_tables(df,out)
     _plots(store,runs,out,groups,df,bench)
     paired=_paired(store,runs,out)
     complete=[r for r in summary if r['status']=='completed']
@@ -131,10 +139,39 @@ def analyze(store,destination):
         text+='\n'.join(f"| {g['mode']} | {g['H']} | {g['n']} | {g['successes']}/{g['n']} | {g['mean_CI']:.3f} |" for g in groups)+'\n\n'
     else:
         text+='No live formation results are eligible for the main matrix yet. Mock or short smoke runs cannot establish supracompetitive pricing.\n\n'
+    text+='## Added paper-reference comparison (H=100)\n\n'
+    text+='This condition overwrites PLANS/INSIGHTS each round. It was added after inspecting the original three-repeat results; its five new formal runs are separate from pilots and from the 15-cell bullet-memory matrix. Repeat labels do not imply contemporaneous or paired sampling.\n\n'
+    if reference_groups:
+        text+='| Architecture | Memory | H | n | Success | Mean CI |\n|---|---|---:|---:|---:|---:|\n'
+        text+='\n'.join(f"| {g['architecture']} | {g['condition']} | {g['H']} | {g['n']} | {g['successes']}/{g['n']} | {g['mean_CI']:.3f} |" for g in comparison_groups)+'\n\n'
+    else:
+        text+='No completed formal paper-reference runs are available yet; historical paper pilots are not substituted.\n\n'
+    text+='See paper_reference_conditions.csv and paper_reference_comparison.csv for separate condition estimates and uncertainty intervals.\n\n'
     text+='See runs.csv for complete status, resources.csv for calls and resources, and benchmarks.json for numerical benchmarks. Success proportions use Wilson intervals; continuous metrics use run-level bootstrap intervals (none for n<2).\n\n'
     text+=f'Analyzed {len(paired)} completed child branches; see paired.csv for paired analysis.\n'
     (out/'results.md').write_text(text)
     return summary
+
+
+def _reference_tables(df,out):
+    references=[];comparison=[]
+    if not df.empty:
+        selected=df[df.eligible_reference | (df.eligible_primary & (df.H==100))]
+        for (architecture,mode,h),group in selected.groupby(['architecture','mode','H']):
+            aggregate=condition_summary(group,mode,h)
+            aggregate.update(architecture=architecture,
+                             condition='overwritten_plans_insights' if architecture=='paper_reference' else mode,
+                             stage='formation_reference' if architecture=='paper_reference' else 'formation')
+            comparison.append(aggregate)
+            if architecture=='paper_reference':references.append(aggregate)
+    # Include headers even before the new condition has completed any runs.
+    columns=['architecture','condition','stage','mode','H','n','successes','success_rate',
+             'wilson_low','wilson_high','mean_CI','CI_bootstrap_low','CI_bootstrap_high',
+             'mean_price','mean_joint_profit']
+    for name,rows in [('paper_reference_conditions.csv',references),('paper_reference_comparison.csv',comparison)]:
+        extra=sorted({key for row in rows for key in row}-set(columns))
+        pd.DataFrame(rows,columns=columns+extra).to_csv(out/name,index=False)
+    return references,comparison
 
 
 def _plots(store,runs,out,groups,df,b):
@@ -186,7 +223,7 @@ def _paired(store,runs,out):
     pairs=[];events=[];parents=[]
     for run in runs:
         c=json.loads(run['config'])
-        if c['stage']=='formation' and c['H']==100 and c['mode']=='full' and run['status']!='cancelled_user':
+        if c['stage']=='formation' and c['architecture']=='bullet_memory' and c['H']==100 and c['mode']=='full' and run['status']!='cancelled_user':
             hist=store.history(run['id'])
             parents.append(dict(parent=run['id'],status=run['status'],checkpoint_available=len(hist)>=200,
                                 eligible=len(hist)>=200 and metrics(hist[150:200]).get('effective_success',False)))

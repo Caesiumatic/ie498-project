@@ -83,7 +83,10 @@ class Caller:
     def __init__(self, store, concurrency=16):
         self.store = store
         self.sem = asyncio.Semaphore(concurrency)
-        self.client = httpx.AsyncClient(timeout=httpx.Timeout(90, connect=20), follow_redirects=False)
+        # Retain one connection per permitted in-flight call, avoiding the default
+        # 20-idle-connection cap when the coordinator runs more independent runs.
+        self.client = httpx.AsyncClient(timeout=httpx.Timeout(90, connect=20), follow_redirects=False,
+            limits=httpx.Limits(max_connections=concurrency, max_keepalive_connections=concurrency))
         self.not_before=0.0
         self.limiter=RateLimiter()
 

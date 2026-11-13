@@ -35,8 +35,8 @@
     "transport_version": "stateless-single-message-no-cache-write-v1"
   },
   "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
-  "repeats": 3,
-  "desired_repeats": 3,
+  "repeats": 5,
+  "desired_repeats": 5,
   "estimated_batch_cost_usd": 8.5988149,
   "batch_cost_safety_factor": 1.2,
   "paper_cost_per_remaining_round": 0.003,
@@ -256,5 +256,19 @@
       "budget": null
     },
     "behavior_based": false
+  },
+  "five_repeat_extension": {
+    "date_utc": "2026-11-13T18:08:27.936485+00:00",
+    "trigger": "User requests five repeats and a formal H100 overwritten PLANS/INSIGHTS condition after reviewing three-repeat results",
+    "prior_repeats": 3,
+    "new_repeats": 5,
+    "prior_results_seen": true,
+    "reason": "User considers current results too variable; fixed extension to five, not a significance-based stopping rule",
+    "budget_usd": null,
+    "balance": {
+      "spent": 32.19904462,
+      "reserved": 0,
+      "budget": null
+    }
   }
 }
