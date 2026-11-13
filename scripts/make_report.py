@@ -133,6 +133,9 @@ Each complete run is one independent observation; neither the two firms nor the 
     text+='\nIndividual added reference runs (pilots excluded):\n\n'
     text+=table(reference,['id','repetition','status','rounds_completed','CI','effective_success','cost_usd'])
     text+='\nThe paper condition was added after viewing the original results. Its repeat labels 1–3 supply new independent observations, not retrospective changes to old trajectories. Comparisons are unpaired and potentially affected by execution-time or model-service differences. Five repeats still provide limited precision; neither a favorable example nor a condition ranking establishes stable behavior.\n'
+    extension_interpretation=ROOT/'reports/extension_interpretation.md'
+    if len(primary)==75 and len(references)==5 and extension_interpretation.exists():
+        text+='\n'+extension_interpretation.read_text()+'\n'
     interpretation=ROOT/'reports/interpretation.md'
     if interpretation.exists():
         text+='\n## Historical interpretation of the original three-repeat sample\n\nThe following commentary is retained from the original 45-run analysis. Its numerical claims and text sampling refer only to that historical sample; they are not updated conclusions about the five-repeat extension or the newly added paper condition. Current aggregate results appear in the tables above.\n\n'
