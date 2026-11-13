@@ -11,9 +11,35 @@ from ie498.memory import build_compressor,build_seller,digest,parse_output,promp
 from ie498.storage import Store,atomic_json
 
 
+def verify_original_run_immutability(store, manifest_path):
+    """Check frozen payloads one run at a time using the original JSON encoding."""
+    expected=json.loads(Path(manifest_path).read_text())
+    required={f'formation-r{r}-h{h}-{mode}' for r in (1,2,3)
+              for h in (0,1,5,20,100) for mode in ('clear','full','compressed')}
+    assert set(expected)==required,'Original-run fingerprint manifest must cover all 45 original runs'
+    for run_id, frozen_hash in expected.items():
+        payload={table:store.rows(f'SELECT * FROM {table} WHERE run_id=? ORDER BY rowid',(run_id,))
+                 for table in ('rounds','memory_entries','memory_views','api_attempts')}
+        # Keep json.dumps defaults (including ensure_ascii=True and separators):
+        # these fingerprints were captured with json.dumps(payload, sort_keys=True).
+        observed=digest(json.dumps(payload,sort_keys=True))
+        assert observed==frozen_hash,('Original run payload changed',run_id)
+        del payload
+    return len(expected)
+
+
+def verify_reference_memory_view(history, t, agent, view):
+    previous=history[t-2]['actions'][agent] if t>1 else {'plans':'','insights':''}
+    assert view['text']==previous['plans']+'\n'+previous['insights'],('Paper memory overwrite mismatch',t,agent)
+
+
 def main():
     store=Store(ROOT/'data/runs/live',readonly=True)
-    counts=dict(runs=0,rounds=0,memory_entries=0,attempts=0,accepted_attempts=0,verified_seller_inputs=0,verified_compressor_inputs=0,reparsed_current_outputs=0)
+    assert store.spending()['reserved']==0,'Stop requests before final audit'
+    assert not store.rows("SELECT id FROM runs WHERE status='running'"),'Stop the runner before final audit'
+    counts=dict(verified_original_runs=0,verified_reference_memory_views=0,runs=0,rounds=0,memory_entries=0,attempts=0,accepted_attempts=0,verified_seller_inputs=0,verified_compressor_inputs=0,reparsed_current_outputs=0)
+    fingerprint_manifest=ROOT/'data/manifests/pre-extension-original-run-hashes.json'
+    counts['verified_original_runs']=verify_original_run_immutability(store,fingerprint_manifest)
     configs={};hashes={}
     for run in store.rows('SELECT * FROM runs ORDER BY id'):
         counts['runs']+=1;c=json.loads(run['config']);configs[run['id']]=c;hashes[run['id']]=run['prompt_hash']
@@ -24,6 +50,11 @@ def main():
         entries=store.rows('SELECT * FROM memory_entries WHERE run_id=? ORDER BY t,agent',(run['id'],))
         counts['memory_entries']+=len(entries)
         assert len(entries)==(2*len(history) if c['architecture']=='bullet_memory' else 0),run['id']
+        if c['architecture']=='paper_reference':
+            assert not entries,('Paper reference must not append bullet entries',run['id'])
+            for stored_view in store.rows('SELECT t,agent,payload FROM memory_views WHERE run_id=? ORDER BY t,agent',(run['id'],)):
+                verify_reference_memory_view(history,stored_view['t'],stored_view['agent'],json.loads(stored_view['payload']))
+                counts['verified_reference_memory_views']+=1
         for entry in entries:
             assert entry['text']==history[entry['t']-1]['actions'][entry['agent']]['memory_bullet']
         if run['parent']:
@@ -84,7 +115,7 @@ def main():
     if spending['budget'] is not None:assert spending['spent']+spending['reserved']<=spending['budget']+1e-8
     assert spending['reserved']==0,'Wait for all in-flight requests before final audit'
     result={'passed':True,'counts':counts,'spending':spending,'prompt_hash':prompt_hash(),
-            'checks':['consecutive rounds','immutable memory and fork lineage','economic recomputation',
+            'checks':['original_run_immutability','reference_memory_overwrite','consecutive rounds','immutable memory and fork lineage','economic recomputation',
                       'price intervention arithmetic','private input reconstruction for current prompts',
                       'full archive compressor input reconstruction','accepted response provenance','reparse current-protocol raw outputs','raw/request checksums','usage-cost reconciliation','budget']}
     atomic_json(ROOT/'reports/data_audit.json',result);print(json.dumps(result,indent=2));store.close()

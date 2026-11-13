@@ -71,3 +71,13 @@ Formal-stage transport keeps the single user string and all scientific inputs un
 ## Final scope after user budget changes
 
 The user raised the budget from $15 to $25 and then removed the cap. The final formal scope follows the user's explicit selection: 15 conditions×3 independent 300-round runs. Historical freezes and amendment timing are recorded in D17–D23 and their JSON files. Additional repeats use the same protocol; intermediate behavioral results do not determine stopping. The two completed supplemental pilots are separately labeled as post-freeze diagnostic data.
+
+## Five-repeat amendment and original-paper reference
+
+The user subsequently requested five repeats after inspecting the three-repeat results. The current fixed endpoint is 75 bullet-memory runs plus 5 formal `formation_reference` runs, all 300 rounds. The 45 original completed runs remain unchanged; their pre-extension fingerprints are recorded. The 30 previously canceled, unstarted plans are reactivated under the explicit amendment. See D26–D27 and `configs/extension-freeze.json` for timing, scope, and scheduling.
+
+The added H100 condition uses the original paper's overwritten PLANS/INSIGHTS architecture: carry only each seller's previous file contents, allow unrestricted multiline revision/deletion subject to the existing total output cap, and retain the last 100 rounds of permitted feedback. It uses the same GPT‑6 Luna low setting as the rest of this project. See [the source-method audit](paper_reference_method.md) for exact correspondence and replication differences.
+
+All five formal reference runs start empty and are generated after the original results. Labels r1–r3 fill the missing reference sample counts; they do not imply earlier execution, shared random seeds, or paired sampling. The historical paper pilot remains excluded. This comparison changes the output task and memory representation together and does not isolate overwriting as a single causal factor. Separate architecture labels and summaries prevent pooling with bullet H100/full. The original minimum-H analysis still applies only to the 15-cell bullet grid.
+
+Five repeats improve precision modestly but do not guarantee stable outcomes. All run points, Wilson intervals, and run-level bootstrap intervals remain reported. No outcome-dependent stopping or further expansion is authorized by this fixed plan. Independent runs may overlap in execution; within-run dependencies, bilateral input isolation, request bodies, rate-limit protections, cost reservations, and durable storage are retained.

@@ -4,7 +4,13 @@ This experiment tests how visible market history and strategic memory shape pric
 
 The runner records each decision, memory view, settlement, and API cost, and resumes interrupted runs by logical call ID. Start with the [results](reports/research_report.md), [research protocol](docs/protocol.md), or [current status](docs/status.md); the [decision log](docs/decisions.md) records protocol choices.
 
-## Completed results
+## Five-repeat extension in progress
+
+The user requested an extension after reviewing the three-repeat results. The frozen design now contains **75 bullet-memory runs plus 5 formal H100 paper-reference runs**, each lasting 300 rounds. The original 45 runs are retained; 30 additional bullet runs and 5 fresh paper runs are being generated. The reference overwrites PLANS/INSIGHTS each round, rather than appending bullets. Its labels r1–r3 supplement the earlier sample counts but were added later; historical pilots are not relabeled.
+
+See the [paper-method audit](docs/paper_reference_method.md), [frozen extension](configs/extension-freeze.json), and [performance measurements](docs/performance.md). Resume the frozen extension with `uv run python scripts/run_extension.py`. The original three-repeat report is preserved as [three_repeat_report.md](reports/three_repeat_report.md). Results below describe that completed delivery until the expanded report is regenerated.
+
+## Completed three-repeat results
 
 The completed matrix contains **45 formal runs and 13,500 rounds**, with 3 independent runs per condition and 300 rounds per run. Six completed pilots are reported separately.
 

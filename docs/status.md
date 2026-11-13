@@ -1,4 +1,6 @@
-# Final status
+# Status: five-repeat extension in progress
+
+The frozen extension adds 30 bullet-memory runs and 5 fresh formal H100 PLANS/INSIGHTS runs; target: 80 formal runs, 24,000 rounds. Existing results below describe the completed three-repeat delivery. The original 45 runs remain immutable.
 
 - Model: GPT‑6 Luna with low reasoning for every live seller and compressor.
 - Formal experiment: 15 conditions×3 independent repeats×300 rounds; all 45 runs and 13,500 rounds completed.

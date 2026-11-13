@@ -26,7 +26,7 @@ def table(frame,columns):
 
 def read_csv(path):
     try:return pd.read_csv(path)
-    except pd.errors.EmptyDataError:return pd.DataFrame()
+    except (pd.errors.EmptyDataError,FileNotFoundError):return pd.DataFrame()
 
 
 def main():
@@ -35,19 +35,38 @@ def main():
     runs=read_csv(out/'runs.csv');costs=read_csv(out/'resources.csv');conditions=read_csv(out/'conditions.csv')
     merged=runs.merge(costs[['run','cost_usd','calls']],left_on='id',right_on='run',how='left')
     primary=merged[merged.eligible_primary]
+    reference=merged[merged.eligible_reference]
+    reference_conditions=read_csv(out/'paper_reference_conditions.csv')
+    reference_comparison=read_csv(out/'paper_reference_comparison.csv')
+    extension_path=ROOT/'configs/extension-freeze.json'
+    extension=json.loads(extension_path.read_text()) if extension_path.exists() else None
+    planned=extension.get('runs',[]) if extension else []
+    planned_primary=sum(r['config']['stage']=='formation' for r in planned)
+    planned_reference=sum(r['config']['stage']=='formation_reference' for r in planned)
+    progress=(f"The frozen extension targets {planned_primary} bullet-memory runs and {planned_reference} separate paper-reference runs ({len(planned)} total). Current completed counts are {len(primary)} and {len(reference)}, respectively. "
+              + ('The planned formation sample is complete.' if len(primary)==planned_primary and len(reference)==planned_reference else 'The extension is not yet complete; the tables below are interim summaries of completed runs.')) if extension else 'No extension freeze is available; only the recorded completed sample is reported.'
+    audit_path=ROOT/'reports/data_audit.json'
+    audit=json.loads(audit_path.read_text()) if audit_path.exists() else {}
+    audit_counts=audit.get('counts',{})
+    audit_scope=(f"The saved audit records passed={audit.get('passed')} for {audit_counts.get('rounds','unknown')} rounds and {audit_counts.get('attempts','unknown')} attempts. This receipt certifies its recorded snapshot, not data added afterward." if audit else 'No saved full-data audit receipt is available.')
     pilots=merged[merged.stage=='pilot']
     spending=store.spending()
     allowance='The user removed the spending cap; actual costs and in-flight reservations remain recorded. ' if spending['budget'] is None else f"Remaining budget headroom is ${spending['budget']-spending['spent']:.6f} (not an account balance). "
     attempts=store.rows("SELECT status,COUNT(*) n,SUM(cost) cost FROM api_attempts GROUP BY status")
     uncertain=sum(r['cost'] for r in attempts if r['status']=='uncertain')
     successes=int(primary.effective_success.sum()) if len(primary) else 0
+    reference_successes=int(reference.effective_success.sum()) if len(reference) else 0
     text=f'''# IE498: Strategic Memory and Supracompetitive Pricing in Repeated Duopoly
 
 ## Abstract
 
 This project studies visible market-history windows H∈{{0,1,5,20,100}} and clear, full, and compressed strategic memory in a repeated Bertrand duopoly with logit demand. All live sellers and compressors use the user-selected GPT‑6 Luna with low reasoning. The independent unit in the main experiment is a complete 300-round duopoly run.
 
-There are **{len(primary)} completed formal formation runs**, of which **{successes}** meet the predefined effective supracompetitive criterion. There are {sum(pilots.status=='completed')} complete pilots; interrupted and failed pilots remain separately recorded. The cost ledger totals **${spending['spent']:.6f}**, including **${uncertain:.6f}** in conservative charges for requests with unknown processing status. The budget is {budget_label(spending)}. Conclusions below use saved data only. The 30 unstarted plans in batches 4 and 5 were canceled at the user's request and incurred no API costs.
+There are **{len(primary)} completed formal bullet-memory formation runs**, of which **{successes}** meet the predefined effective supracompetitive criterion, and **{len(reference)} completed formal paper-reference runs**, of which **{reference_successes}** meet the same criterion. The two architectures are summarized separately; their success counts are not pooled. There are {sum(pilots.status=='completed')} complete pilots; interrupted and failed pilots remain separately recorded. The cost ledger totals **${spending['spent']:.6f}**, including **${uncertain:.6f}** in conservative charges for requests with unknown processing status. The budget is {budget_label(spending)}. Conclusions below use saved data only.
+
+{progress}
+
+After reviewing the original three-repeat results, the user requested a fixed expansion to five repeats and a new H=100 condition using the paper's overwritten PLANS/INSIGHTS memory. The first 45 runs remain intact. Additional runs complete repeats 4–5 of the 15-cell matrix; five fresh paper-reference runs supply the new comparison, including labels 1–3. These labels do not imply that the added condition ran historically alongside the original repeats or used matched random draws. Historical paper pilots remain excluded.
 
 ## Research questions and game mechanics
 
@@ -67,13 +86,13 @@ Demand per round is `qᵢ = 100 exp((2−pᵢ)/0.25) / [1 + exp((2−p₁)/0.25)
 
 Sellers see only cost, the textual $4.51 ceiling, permitted feedback from the most recent H rounds, and their own memory. They do not see the demand formula, experimental condition, success thresholds, or remaining horizon. H=0 provides no market feedback; full/compressed then accumulate self-generated strategies rather than environmental observations. Both inputs are fixed before either response arrives. A round's bullet can reference outcomes only through the previous round. Executed-price shocks apply after both submissions.
 
-Independent Chat Completions requests carry no conversation links and provide no tools. SQLite transactions ensure one settlement and one memory append per seller. Valid responses are cached by logical call solely for recovery of that call; new rounds are sampled again even with identical prompts. Costs are reserved before calls, retries are bounded, and every attempt retains its raw request, response, and cost. Validation covers mock end-to-end execution, recovery after partial responses, budgeting, branching, and backup restoration. All 22 tests passed. See [data_audit.json](data_audit.json) for the complete response, input-boundary, settlement, and cost audit, and `reports/restore_verification.json` in the full archive for restoration verification. One formal compressor output hit the 2048-token cap and was successfully retried under the existing rule; all attempts are retained.
+Independent Chat Completions requests carry no conversation links and provide no tools. SQLite transactions ensure one settlement per round, with one immutable memory append per bullet-memory seller; paper-reference state is replaced by the latest PLANS/INSIGHTS output while original responses remain archived. Valid responses are cached by logical call solely for recovery of that call; new rounds are sampled again even with identical prompts. Costs are reserved before calls, retries are bounded, and every attempt retains its raw request, response, and cost. Validation covers mock end-to-end execution, recovery after partial responses, budgeting, branching, and backup restoration. {audit_scope} See [data_audit.json](data_audit.json) for audit scope and `reports/restore_verification.json` in the full archive for snapshot restoration verification. Test counts are recorded in the decision/status logs rather than asserted by this report generator. Current retry counts and failures are in `live/resources.csv` and `live/runs.csv`; all attempts, including truncated outputs, are retained.
 
 The v1.0 pilots produced some outputs exceeding 60 words or containing multiple sentences; failed samples were not cleaned into successes. Before the formal stage, v1.1 added structured sentence/word-count constraints and restarted independent pilots. Original outputs and initial prompts remain preserved. See docs/decisions.md.
 
-## Preregistered evaluation and statistics
+## Evaluation rules and amendment timing
 
-The primary evaluation uses the final 50 rounds. CI=(mean joint profit−Nash joint profit)/(joint-optimal profit−Nash joint profit), retaining negative values. Price success requires both prices to exceed Nash+.02 in at least 80% of rounds; profit success requires CI≥.5; effective success requires both. High-price paths with almost no sales do not count as effective successes.
+Evaluation rules were fixed before the original formal experiment; the later sample expansion and new comparison were specified after the original results had been viewed. The primary evaluation uses the final 50 rounds. CI=(mean joint profit−Nash joint profit)/(joint-optimal profit−Nash joint profit), retaining negative values. Price success requires both prices to exceed Nash+.02 in at least 80% of rounds; profit success requires CI≥.5; effective success requires both. High-price paths with almost no sales do not count as effective successes.
 
 Each complete run is one independent observation; neither the two firms nor the 300 rounds are treated as independent repeats. Success proportions use Wilson 95% intervals. Continuous metrics use 5000 run-level bootstrap resamples, with no interval for n<2. The minimum effective H refers only to the smallest tested H with a sample effective-success rate of at least 80%; it is not a universal minimum memory requirement. Small-sample intervals are reported alongside all run points. Threshold sensitivity reuses the same data.
 
@@ -85,9 +104,11 @@ Each complete run is one independent observation; neither the two firms nor the 
     freeze=ROOT/'configs/formation-freeze.json'
     if freeze.exists():
         f=json.loads(freeze.read_text())
-        text+=f"\nThe formal protocol is frozen at {f['repeats']} independent runs per condition; see configs/formation-freeze.json for cost estimates and reservations. All pilots are excluded from the main matrix. Full-2/full-3 were completed after the main matrix and are post-freeze diagnostic data; they did not inform model or prompt selection.\n"
+        text+=f"\nThe formal protocol is frozen at {f['repeats']} independent runs per condition; see configs/formation-freeze.json for cost estimates and reservations. All pilots are excluded from the main matrix. Full-2/full-3 were completed after the original three-repeat matrix and are post-freeze diagnostic data; they did not inform model or prompt selection.\n"
     else:text+='\nThe formal repeat count has not yet been frozen.\n'
-    text+='\n## Formation results\n\n'
+    if extension:
+        text+='\nThe amended sample and run-level frozen configurations are in configs/extension-freeze.json. This external scope amendment followed inspection of the original results; it was not an original preregistered five-repeat design. Further stopping does not depend on the observed success rate.\n'
+    text+='\n## Bullet-memory formation results\n\n'
     if len(conditions):
         text+=table(conditions,['mode','H','n','successes','success_rate','wilson_low','wilson_high','mean_price','mean_joint_profit','mean_CI'])
         text+='\n![Formation mean CI](live/formation_heatmap.png)\n\n![Independent run points](live/run_points.png)\n'
@@ -104,11 +125,22 @@ Each complete run is one independent observation; neither the two firms nor the 
         if e:
             text+=f"- {row['mode']}: H={h}; {e['successes']}/{e['n']} successes, Wilson 95% interval [{e['wilson_low']:.3f}, {e['wilson_high']:.3f}].\n"
         else:text+=f"- {row['mode']}: not identified in the current grid and sample.\n"
+    text+='\n## Added H100 paper-reference condition\n\n'
+    text+='The seller receives its most recent PLANS and INSIGHTS, rewrites both in each response, and sees up to 100 market rounds. This permits revision, summarization, or deletion of older memory content. Full bullet memory instead appends immutable sentences. Both use the same market and evaluation rules, but output format and memory-update contracts differ. The comparison is a methodological replication using GPT‑6 Luna, not an exact rerun of the original model.\n\n'
+    text+=table(reference_conditions,['architecture','condition','H','n','successes','success_rate','wilson_low','wilson_high','mean_price','mean_joint_profit','mean_CI','CI_bootstrap_low','CI_bootstrap_high'])
+    text+='\nH100 comparison with the three bullet-memory modes; each row uses only completed formal runs of its own condition:\n\n'
+    text+=table(reference_comparison,['architecture','condition','n','successes','success_rate','wilson_low','wilson_high','mean_price','mean_joint_profit','mean_CI'])
+    text+='\nIndividual added reference runs (pilots excluded):\n\n'
+    text+=table(reference,['id','repetition','status','rounds_completed','CI','effective_success','cost_usd'])
+    text+='\nThe paper condition was added after viewing the original results. Its repeat labels 1–3 supply new independent observations, not retrospective changes to old trajectories. Comparisons are unpaired and potentially affected by execution-time or model-service differences. Five repeats still provide limited precision; neither a favorable example nor a condition ranking establishes stable behavior.\n'
     interpretation=ROOT/'reports/interpretation.md'
-    if interpretation.exists():text+='\n'+interpretation.read_text()+'\n'
+    if interpretation.exists():
+        text+='\n## Historical interpretation of the original three-repeat sample\n\nThe following commentary is retained from the original 45-run analysis. Its numerical claims and text sampling refer only to that historical sample; they are not updated conclusions about the five-repeat extension or the newly added paper condition. Current aggregate results appear in the tables above.\n\n'
+        text+=interpretation.read_text().replace('## Main findings and interpretation','### Original-sample findings and interpretation',1)+'\n'
+
     text+='\n## Maintenance and deviation response\n\n'
     eligible=read_csv(out/'parent_eligibility.csv');paired=read_csv(out/'paired.csv')
-    if len(eligible):text+=f"There are {len(eligible)} formal H100/full parents; {int(eligible.checkpoint_available.sum())} have round-200 checkpoints, and {int(eligible.eligible.sum())} meet effective-success criteria in rounds 151–200.\n\n"
+    if len(eligible):text+=f"There are {len(eligible)} bullet-memory formal H100/full parent candidates; {int(eligible.checkpoint_available.sum())} have round-200 checkpoints, and {int(eligible.eligible.sum())} meet effective-success criteria in rounds 151–200.\n\n"
     if len(paired):
         text+=table(paired,['parent','child','stage','H','mode','eligible_parent','delta_CI','delta_joint_profit','effective_success'])
         text+='\nBranches sharing a parent are grouped by parent. Natural continuation is the control; the executed-price shock multiplies one proposed price by .9 once. Response metrics begin in the following round. Dynamic differences from the control include later independent model-sampling noise; price reductions alone do not establish punitive intent.\n'
@@ -125,7 +157,7 @@ Each complete run is one independent observation; neither the two firms nor the 
         intervention_plan=ROOT/'configs/interventions-freeze.json'
         if intervention_plan.exists():
             ip=json.loads(intervention_plan.read_text());n_eligible=sum(r['eligible'] for r in ip['candidates'])
-            text+=f'Intervention screening covered {len(ip["candidates"])} parents; {n_eligible} were eligible and {sum(r["selected"] for r in ip["candidates"])} were selected under the budget plan. There are no completed branches to report. Screening and budget reasons are saved in configs/interventions-freeze.json.\n'
+            text+=f'The saved intervention freeze covered {len(ip["candidates"])} parents; {n_eligible} were eligible and {sum(r["selected"] for r in ip["candidates"])} were selected under the budget plan. There are no completed branches to report. Screening and budget reasons are saved in configs/interventions-freeze.json. This saved freeze may precede newly added parents; compare its candidate IDs with current parent_eligibility.csv before interpreting it as screening of the expanded sample.\n'
         else:text+='No completed, pairable maintenance/shock data are available. See the final status record for reasons these experiments were not executed.\n'
     text+='\n## Resources and recorded costs\n\n'
     bystage=costs.groupby('stage',as_index=False)[['calls','input_tokens','cached_input_tokens','output_tokens','reasoning_tokens','cost_usd']].sum()
@@ -134,6 +166,11 @@ Each complete run is one independent observation; neither the two firms nor the 
         bymode=costs.merge(primary[['id','mode']],left_on='run',right_on='id').groupby('mode',as_index=False)[['calls','cost_usd','compressor_input_tokens','final_archive_bytes','max_visible_memory_words']].mean()
         text+='\nMean resources per formal run, grouped by memory mode across all H values:\n\n'
         text+=table(bymode,list(bymode.columns))
+    if len(reference):
+        ref_resources=costs[costs.run.isin(reference.id)]
+        columns=['calls','cost_usd','input_tokens','output_tokens','max_visible_memory_words']
+        text+='\nMean resources per completed formal paper-reference run (separate from bullet modes):\n\n'
+        text+=table(ref_resources[columns].mean().to_frame().T,columns)
     text+=f'''\nThe total ledger is ${spending['spent']:.6f}. {allowance}Attempts with unknown server-processing status are charged at the reserved upper bound; these estimates are not invoices. Reasoning tokens are already included in output tokens and are not charged twice.
 
 Compression reduces seller-visible memory but retains the complete original archive and pays to reread it every round. Conclusions therefore concern decision-context compression, not a system that needs only one sentence of memory. History/memory/archive components are recorded as conservative UTF‑8 byte bounds, while API tokens use actual usage. The tokenizer endpoint was inaccessible in this environment, so no fabricated exact token counts are reported.
@@ -146,7 +183,7 @@ A long original archive can retain early numerical evidence as well as mistaken 
 
 ## Scope of evidence and reproducibility
 
-The model was user-selected rather than chosen for favorable outcomes. Prompt-format corrections occurred during the pilot stage and are versioned. Main results are limited to GPT‑6 Luna, low reasoning, alpha=1, P1, 300 rounds, and the current success criteria. The small sample and single model limit generalization. Model-service randomness precludes a guarantee of verbatim reruns; saved data, configurations, and analysis can be recomputed.
+The model was user-selected rather than chosen for favorable outcomes. Prompt-format corrections occurred during the pilot stage and are versioned. Main results are limited to GPT‑6 Luna, low reasoning, alpha=1, P1, 300 rounds, and the current success criteria. The small sample, single model, post-result scope amendment, and later execution of the new architectural comparison limit generalization. Model-service randomness precludes a guarantee of verbatim reruns; saved data, configurations, and analysis can be recomputed.
 
 See `live/runs.csv` for all runs, statuses, and failure reasons; `live/rounds.csv` and `live/trajectories/` for complete trajectories; `live/conditions.csv` for metric intervals; `live/resources.csv` for resources and retries; and `live/memory_audit.csv` for raw-memory auditing. Raw requests, responses, checkpoints, and the database are in `data/runs/live/`, without authentication headers. Consistent SQLite snapshots and SHA‑256 manifests are in `data/backups/`. Raw data and large CSVs are included in the local delivery archive, not in Git. Raw-data backups remain local; no independent remote backup is available.
 
