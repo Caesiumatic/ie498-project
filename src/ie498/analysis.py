@@ -203,16 +203,17 @@ def _paired(store,runs,out):
                              survival_censored=failure is None,followup_rounds=len(follow))
         if c.get('shock'):
             agent=1-c['shock']['agent'];event=c['shock']['t']
+            zero_shock=child[event-1]['proposed_prices'][c['shock']['agent']]==0
             diffs=[]
             for r,control in zip(follow,baseline):
                 delta=r['prices'][agent]-control['prices'][agent]
                 events.append(dict(parent=run['parent'],child=run['id'],event_time=r['t']-event,
-                                   opponent_price_delta=delta,opponent_profit_delta=r['profits'][agent]-control['profits'][agent]))
+                                   opponent_price_delta=delta,opponent_profit_delta=r['profits'][agent]-control['profits'][agent],zero_shock=zero_shock))
                 if r['t']>event:diffs.append(delta)
             recovery=next((i+1 for i in range(len(diffs)-4) if all(abs(d)<.02 for d in diffs[i:i+5])),None)
             pairs[-1].update(recovery_time=recovery,response_rounds=sum(abs(d)>=.02 for d in diffs),
                              first_opponent_price_delta=diffs[0] if diffs else None,
-                             zero_shock=child[event-1]['proposed_prices'][c['shock']['agent']]==0)
+                             zero_shock=zero_shock)
     pd.DataFrame(pairs).to_csv(out/'paired.csv',index=False)
     pd.DataFrame(events).to_csv(out/'shock_events.csv',index=False)
     # Aggregate within parent before summarizing independent parent units.
@@ -231,10 +232,16 @@ def _paired(store,runs,out):
                                        mean_delta_CI=float(group.delta_CI.mean()),bootstrap_low=low,bootstrap_high=high))
         pd.DataFrame(condition_rows).to_csv(out/'paired_conditions.csv',index=False)
     if events:
-        e=pd.DataFrame(events);fig,ax=plt.subplots(figsize=(8,4))
-        grouped=e.groupby(['parent','event_time']).opponent_price_delta.mean().reset_index()
-        for parent,g in grouped.groupby('parent'):ax.plot(g.event_time,g.opponent_price_delta,label=parent)
-        ax.axhline(0,color='black',ls='--');ax.axvline(0,color='red',ls=':')
-        ax.set(xlabel='Rounds since execution shock',ylabel='Opponent price minus control');ax.legend(fontsize=7)
+        e=pd.DataFrame(events);e=e[~e.zero_shock]
+        if e.empty:return pairs
+        fig,axes=plt.subplots(2,1,figsize=(8,6),sharex=True)
+        grouped=e.groupby(['parent','event_time'])[['opponent_price_delta','opponent_profit_delta']].mean().reset_index()
+        for parent,g in grouped.groupby('parent'):
+            axes[0].plot(g.event_time,g.opponent_price_delta,label=parent)
+            axes[1].plot(g.event_time,g.opponent_profit_delta,label=parent)
+        for ax in axes:
+            ax.axhline(0,color='black',ls='--');ax.axvline(0,color='red',ls=':')
+        axes[0].set_ylabel('Opponent price minus control');axes[0].legend(fontsize=7)
+        axes[1].set(xlabel='Rounds since execution shock',ylabel='Opponent profit minus control')
         fig.tight_layout();fig.savefig(out/'shock_response.png',dpi=150);plt.close(fig)
     return pairs
