@@ -26,7 +26,7 @@
   "epsilon_price": 0.02,
   "price_fraction": 0.8,
   "ci_threshold": 0.5,
-  "repeats": 5,
+  "repeats": 3,
   "reasoning_effort": "low",
   "output_limit": 2048,
   "paper_output_limit": 4096,

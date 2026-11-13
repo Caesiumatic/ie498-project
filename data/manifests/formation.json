@@ -213,7 +213,7 @@
     "interim_results_already_seen": "Complete batch 1 and the ten completed clear/full runs in batch 2",
     "scope": "75 formation runs of 300 rounds; complete two previously planned full pilots; checkpoint-qualified interventions afterward"
   },
-  "code_commit": "9770a18dfb0802db293f253745261478d6efc10f",
+  "code_commit": "4616d5166a8862b3548ab9c91c03f377c7c03858",
   "runs": [
     {
       "repetition": 1,

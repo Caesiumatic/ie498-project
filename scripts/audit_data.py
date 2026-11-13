@@ -60,7 +60,8 @@ def main():
                 accepted=store.accepted(call,digest(request_body(c,prompt,'seller')))
                 assert accepted==row['actions'][agent],call
                 counts['verified_seller_inputs']+=1
-    for row in store.rows('SELECT * FROM api_attempts'):
+    for stored_row in store.db.execute('SELECT id,request_hash,raw_path,raw_sha256,status,run_id,purpose,parsed,cost FROM api_attempts'):
+        row=dict(stored_row)
         counts['attempts']+=1
         request=store.root/f"requests/{row['id']}.json"
         assert request.exists(),row['id']

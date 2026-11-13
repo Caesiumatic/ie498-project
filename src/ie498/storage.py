@@ -62,6 +62,9 @@ class Store:
           raw_path TEXT, raw_sha256 TEXT, error TEXT, created REAL NOT NULL,
           UNIQUE(call_id,attempt));
         CREATE UNIQUE INDEX IF NOT EXISTS one_accepted ON api_attempts(call_id) WHERE status='accepted';
+        CREATE INDEX IF NOT EXISTS budget_totals ON api_attempts(status,cost,reserved);
+        CREATE INDEX IF NOT EXISTS recent_call ON api_attempts(run_id,agent,purpose,status,t DESC);
+        CREATE INDEX IF NOT EXISTS run_costs ON api_attempts(run_id,t,cost);
         CREATE TABLE IF NOT EXISTS interventions(
           run_id TEXT REFERENCES runs(id), t INTEGER, agent INTEGER, factor REAL,
           PRIMARY KEY(run_id,t,agent));

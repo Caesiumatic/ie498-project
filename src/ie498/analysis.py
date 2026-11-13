@@ -182,7 +182,7 @@ def _paired(store,runs,out):
     pairs=[];events=[];parents=[]
     for run in runs:
         c=json.loads(run['config'])
-        if c['stage']=='formation' and c['H']==100 and c['mode']=='full':
+        if c['stage']=='formation' and c['H']==100 and c['mode']=='full' and run['status']!='cancelled_user':
             hist=store.history(run['id'])
             parents.append(dict(parent=run['id'],status=run['status'],checkpoint_available=len(hist)>=200,
                                 eligible=len(hist)>=200 and metrics(hist[150:200]).get('effective_success',False)))

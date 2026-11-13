@@ -17,7 +17,7 @@ from ie498.storage import Store,atomic_json,remaining_budget
 def plan(store,clear_h,compressed_h):
     candidates=[];definitions=[];reserved=0.0
     available=remaining_budget(store.spending())
-    formation=store.rows("SELECT * FROM runs WHERE json_extract(config,'$.stage')='formation' ORDER BY id")
+    formation=store.rows("SELECT * FROM runs WHERE json_extract(config,'$.stage')='formation' AND status!='cancelled_user' ORDER BY id")
     if any(r['status'] not in ('completed','not_started_budget') for r in formation):
         raise ValueError('Complete or budget-close formation before planning interventions')
     for run in formation:

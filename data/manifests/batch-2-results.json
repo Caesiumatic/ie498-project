@@ -10,7 +10,7 @@
     },
     {
       "id": "formation-r2-h1-compressed",
-      "status": "paused_manual"
+      "status": "completed"
     },
     {
       "id": "formation-r2-h0-clear",
@@ -26,7 +26,7 @@
     },
     {
       "id": "formation-r2-h20-compressed",
-      "status": "paused_manual"
+      "status": "completed"
     },
     {
       "id": "formation-r2-h0-compressed",
@@ -38,7 +38,7 @@
     },
     {
       "id": "formation-r2-h100-compressed",
-      "status": "paused_manual"
+      "status": "completed"
     },
     {
       "id": "formation-r2-h5-full",
@@ -61,7 +61,7 @@
       "status": "completed"
     }
   ],
-  "cost_usd": 7.922573600000001,
-  "snapshot": "/workspace/ie498/data/backups/batches/20261113T055038029202Z",
-  "code_commit": "9770a18dfb0802db293f253745261478d6efc10f"
+  "cost_usd": 8.4706059,
+  "snapshot": "/workspace/ie498/data/backups/batches/20261113T055510944513Z",
+  "code_commit": "4616d5166a8862b3548ab9c91c03f377c7c03858"
 }

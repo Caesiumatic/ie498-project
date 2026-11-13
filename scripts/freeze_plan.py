@@ -45,9 +45,9 @@ def main():
     paper_reserve=paper_left*.003
     available=remaining_budget(balance)-paper_reserve-.1
     safety=1.04
-    repeats=5 if balance['budget'] is None else min(3,int(available/(batch*safety)))
+    repeats=3 if balance['budget'] is None else min(3,int(available/(batch*safety)))
     if repeats<1:raise ValueError(f'Balanced batch needs estimated ${batch:.4f}; available ${available:.4f}')
-    result={'protocol_version':'1.1','config':base,'prompt_hash':prompt_hash(),'repeats':repeats,'desired_repeats':5 if balance['budget'] is None else 3,
+    result={'protocol_version':'1.1','config':base,'prompt_hash':prompt_hash(),'repeats':repeats,'desired_repeats':3,
             'estimated_batch_cost_usd':batch,'batch_cost_safety_factor':safety,'paper_cost_per_remaining_round':.003,
             'budget_at_freeze':balance,'pilot_sources':sources,'history_tokens_per_byte_projection':ratio,
             'projection_method':'Accepted pilot usage, uncached standard rates; shorter H removes history input estimated from minimum observed clear-pilot token/byte ratio; H100 memory/output lengths held fixed for all H; 4% batch margin plus separate paper reserve and $0.10 buffer.',
