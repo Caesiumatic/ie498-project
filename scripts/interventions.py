@@ -11,12 +11,12 @@ from ie498.analysis import metrics
 from ie498.cli import load_env
 from ie498.memory import prompt_hash
 from ie498.runner import git_commit,run_batch,same_config
-from ie498.storage import Store,atomic_json
+from ie498.storage import Store,atomic_json,remaining_budget
 
 
 def plan(store,clear_h,compressed_h):
     candidates=[];definitions=[];reserved=0.0
-    available=store.spending()['budget']-store.spending()['spent']-store.spending()['reserved']
+    available=remaining_budget(store.spending())
     formation=store.rows("SELECT * FROM runs WHERE json_extract(config,'$.stage')='formation' ORDER BY id")
     if any(r['status'] not in ('completed','not_started_budget') for r in formation):
         raise ValueError('Complete or budget-close formation before planning interventions')

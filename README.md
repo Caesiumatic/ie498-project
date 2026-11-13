@@ -2,7 +2,7 @@
 
 可恢复的重复 Bertrand 双企业实验。真实模型统一为 **GPT‑6 Luna**，研究 `H={0,1,5,20,100}` 与 `clear/full/compressed` 三种战略记忆；独立实现论文 P1 的 `paper_reference`。
 
-入口：[研究协议](docs/protocol.md)、[决策记录](docs/decisions.md)、[实验状态](docs/status.md)、[最终研究报告](reports/research_report.md)。所有数值结果均注明 mock、smoke、pilot 或 formation。总API预算$25。
+入口：[研究协议](docs/protocol.md)、[决策记录](docs/decisions.md)、[实验状态](docs/status.md)、[最终研究报告](reports/research_report.md)。所有数值结果均注明 mock、smoke、pilot 或 formation。用户已取消API预算上限；当前正式计划为每格5次，费用持续记账。
 
 ## 安装与密钥
 
@@ -32,8 +32,8 @@ uv run ie498 --data data/runs/live plan --repeats 3
 
 # 3. 完整pilot后按实际成本冻结 configs/formation-freeze.json
 #    包含 config=base.json的完整对象、prompt_hash、repeats、成本依据
-uv run ie498 --data data/runs/live formation --repeats 2 --batch 1
-# 用户把总预算提高到$25后，计划扩展为每格2次；目标3次的成本规则见freeze与决策记录。
+uv run ie498 --data data/runs/live formation --repeats 5 --batch 1
+# 用户取消支出上限后，按原说明预算充足时的方案固定每格5次；历史预算变更见决策记录。
 # 同时接续未完成paper pilot的完整阶段运行器：
 uv run python scripts/run_formation.py
 

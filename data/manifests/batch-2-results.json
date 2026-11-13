@@ -1,0 +1,67 @@
+{
+  "runs": [
+    {
+      "id": "formation-r2-h1-clear",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h5-clear",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h1-compressed",
+      "status": "paused_manual"
+    },
+    {
+      "id": "formation-r2-h0-clear",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h0-full",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h1-full",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h20-compressed",
+      "status": "paused_manual"
+    },
+    {
+      "id": "formation-r2-h0-compressed",
+      "status": "paused_manual"
+    },
+    {
+      "id": "formation-r2-h100-full",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h100-compressed",
+      "status": "paused_manual"
+    },
+    {
+      "id": "formation-r2-h5-full",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h5-compressed",
+      "status": "paused_manual"
+    },
+    {
+      "id": "formation-r2-h100-clear",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h20-clear",
+      "status": "completed"
+    },
+    {
+      "id": "formation-r2-h20-full",
+      "status": "completed"
+    }
+  ],
+  "cost_usd": 7.3557566,
+  "snapshot": "/workspace/ie498/data/backups/batches/20261113T054337732329Z",
+  "code_commit": "1db554e1cafcd63d7120ac2f6112cab097220edc"
+}

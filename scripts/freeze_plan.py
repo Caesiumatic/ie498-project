@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
 from ie498.cli import load_config
 from ie498.memory import visible_history,prompt_hash
-from ie498.storage import Store,atomic_json
+from ie498.storage import Store,atomic_json,remaining_budget
 
 
 def main():
@@ -43,11 +43,11 @@ def main():
     batch=sum(c['projected_cost_usd'] for c in cells)
     balance=store.spending();paper_left=max(0,300-len(store.history('pilot-v11-paper')))
     paper_reserve=paper_left*.003
-    available=balance['budget']-balance['spent']-balance['reserved']-paper_reserve-.1
+    available=remaining_budget(balance)-paper_reserve-.1
     safety=1.04
-    repeats=min(3,int(available/(batch*safety)))
+    repeats=5 if balance['budget'] is None else min(3,int(available/(batch*safety)))
     if repeats<1:raise ValueError(f'Balanced batch needs estimated ${batch:.4f}; available ${available:.4f}')
-    result={'protocol_version':'1.1','config':base,'prompt_hash':prompt_hash(),'repeats':repeats,'desired_repeats':3,
+    result={'protocol_version':'1.1','config':base,'prompt_hash':prompt_hash(),'repeats':repeats,'desired_repeats':5 if balance['budget'] is None else 3,
             'estimated_batch_cost_usd':batch,'batch_cost_safety_factor':safety,'paper_cost_per_remaining_round':.003,
             'budget_at_freeze':balance,'pilot_sources':sources,'history_tokens_per_byte_projection':ratio,
             'projection_method':'Accepted pilot usage, uncached standard rates; shorter H removes history input estimated from minimum observed clear-pilot token/byte ratio; H100 memory/output lengths held fixed for all H; 4% batch margin plus separate paper reserve and $0.10 buffer.',

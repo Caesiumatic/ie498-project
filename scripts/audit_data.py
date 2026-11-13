@@ -79,7 +79,8 @@ def main():
             if raw.get('usage'):
                 expected=cost_from_usage(raw['usage'],configs[row['run_id']]['prices'])
                 assert abs(expected-row['cost'])<1e-10,row['id']
-    spending=store.spending();assert spending['spent']+spending['reserved']<=spending['budget']+1e-8
+    spending=store.spending()
+    if spending['budget'] is not None:assert spending['spent']+spending['reserved']<=spending['budget']+1e-8
     assert spending['reserved']==0,'Wait for all in-flight requests before final audit'
     result={'passed':True,'counts':counts,'spending':spending,'prompt_hash':prompt_hash(),
             'checks':['consecutive rounds','immutable memory and fork lineage','economic recomputation',

@@ -12,7 +12,7 @@ from ie498.backup import snapshot
 from ie498.cli import load_env,load_config,plan_conditions
 from ie498.memory import prompt_hash
 from ie498.runner import create_run,coordinator_lock,run_one,git_commit,same_config
-from ie498.storage import Store,atomic_json
+from ie498.storage import Store,atomic_json,remaining_budget
 
 
 async def execute(store,freeze,stop_after=None):
@@ -42,7 +42,7 @@ async def execute(store,freeze,stop_after=None):
             paper_left=max(0,300-len(store.history(paper)))
             protected=paper_left*freeze['paper_cost_per_remaining_round']
             needed=batch_estimate*freeze['batch_cost_safety_factor']+protected
-            if balance['budget']-balance['spent']-balance['reserved']<needed:
+            if remaining_budget(balance)<needed:
                 for row in definitions:
                     if row['repetition']>=rep and row['id'] not in completed:
                         store.status(row['id'],'not_started_budget','Whole balanced batch withheld by preregistered cost guard')
@@ -59,6 +59,16 @@ async def execute(store,freeze,stop_after=None):
             if any(r['status']!='completed' for r in batch_rows):break
             if stop_after is not None and rep>=stop_after:break
         await paper_task
+        complete={r['id'] for r in store.rows("SELECT id FROM runs WHERE status='completed'")}
+        if all(r['id'] in complete for r in definitions):
+            pilots=freeze.get('post_formation_pilot_completion',[])
+            if pilots:
+                await asyncio.gather(*(run_one(store,caller,run,stop) for run in pilots))
+                path=snapshot(store,ROOT/'data/backups/batches')
+                atomic_json(ROOT/'data/manifests/pilot-completion-results.json',{
+                    'runs':[r for r in store.rows('SELECT id,status,error FROM runs') if r['id'] in pilots],
+                    'snapshot':str(path),'code_commit':git_commit(),'spending':store.spending(),
+                    'interpretation':'Supplemental completion after formation; excluded from formal matrix'})
     finally:
         if not paper_task.done():
             paper_task.cancel()

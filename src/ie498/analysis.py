@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from .environment import Market
-from .storage import atomic_json
+from .storage import atomic_json,budget_label
 
 
 def metrics(history, window=50, epsilon=.02, ci_threshold=.5, price_fraction=.8):
@@ -124,7 +124,7 @@ def analyze(store,destination):
     paired=_paired(store,runs,out)
     complete=[r for r in summary if r['status']=='completed']
     text='# IE498 实验结果\n\n'
-    text+=f"数据库包含 {len(runs)} 个计划 run，已完成 {len(complete)} 个；费用账本为 ${store.spending()['spent']:.6f}，预算 ${store.spending()['budget']:.2f}。\n\n"
+    text+=f"数据库包含 {len(runs)} 个计划 run，已完成 {len(complete)} 个；费用账本为 ${store.spending()['spent']:.6f}，预算 {budget_label(store.spending())}。\n\n"
     text+='真实实验、mock、smoke、pilot 分别标记；只有 completed 的 formation run 纳入主矩阵统计。每个完整双企业 run 是独立统计单位，单个 run 的轮次不是独立样本。\n\n'
     if groups:
         text+='| Mode | H | n | Success | Mean CI |\n|---|---:|---:|---:|---:|\n'

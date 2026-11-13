@@ -13,7 +13,7 @@
     "max_attempts": 3,
     "context_limit": 1050000,
     "evaluation_window": 50,
-    "budget_usd": 25.0,
+    "budget_usd": null,
     "prices": {
       "input": 0.1,
       "cached_input": 0.01,
@@ -35,8 +35,8 @@
     "transport_version": "stateless-single-message-no-cache-write-v1"
   },
   "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
-  "repeats": 2,
-  "desired_repeats": 3,
+  "repeats": 5,
+  "desired_repeats": 5,
   "estimated_batch_cost_usd": 8.5988149,
   "batch_cost_safety_factor": 1.2,
   "paper_cost_per_remaining_round": 0.003,
@@ -193,5 +193,24 @@
     "final_repeats": 2,
     "uses_behavior": false,
     "decision_before_batch_2": true
+  },
+  "post_formation_pilot_completion": [
+    "pilot-v11-full-2",
+    "pilot-v11-full-3"
+  ],
+  "unlimited_budget_amendment": {
+    "trigger": "Explicit user instruction: 不设上限，继续",
+    "prior_balance": {
+      "spent": 20.882156395,
+      "reserved": 0,
+      "budget": 25.0
+    },
+    "new_budget_usd": null,
+    "prior_repeats": 2,
+    "new_repeats": 5,
+    "basis": "Original specification permits five repeats when budget is sufficient",
+    "behavior_based": false,
+    "interim_results_already_seen": "Complete batch 1 and the ten completed clear/full runs in batch 2",
+    "scope": "75 formation runs of 300 rounds; complete two previously planned full pilots; checkpoint-qualified interventions afterward"
   }
 }

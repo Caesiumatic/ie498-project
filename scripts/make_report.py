@@ -6,7 +6,7 @@ import pandas as pd
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
-from ie498.storage import Store
+from ie498.storage import Store,budget_label
 from ie498.analysis import analyze
 
 
@@ -37,6 +37,7 @@ def main():
     primary=merged[merged.eligible_primary]
     pilots=merged[merged.stage=='pilot']
     spending=store.spending()
+    allowance='用户已取消支出上限，仍逐次记录实际费用与在途预留。' if spending['budget'] is None else f"尚有${spending['budget']-spending['spent']:.6f}预算空间（不代表账户余额）。"
     attempts=store.rows("SELECT status,COUNT(*) n,SUM(cost) cost FROM api_attempts GROUP BY status")
     uncertain=sum(r['cost'] for r in attempts if r['status']=='uncertain')
     successes=int(primary.effective_success.sum()) if len(primary) else 0
@@ -46,7 +47,7 @@ def main():
 
 本项目在 logit 需求的重复 Bertrand 双企业博弈中，研究可见市场历史 H∈{{0,1,5,20,100}} 与 clear、full、compressed 战略记忆的影响。所有真实卖家和压缩器使用用户指定的 GPT‑6 Luna，low 推理设置。主实验独立单位为300轮的完整双企业run。
 
-当前已完成 **{len(primary)} 个正式formation run**，其中 **{successes} 个**满足预先定义的有效超竞争标准。完成的pilot有 {sum(pilots.status=='completed')} 个；中断/失败pilot保留在独立记录中。费用账本共 **${spending['spent']:.6f}**，其中未知处理状态的保守计费 **${uncertain:.6f}**，总授权预算${spending['budget']:.2f}（由用户从$15提高）。下文仅依据已保存数据陈述结论。
+当前已完成 **{len(primary)} 个正式formation run**，其中 **{successes} 个**满足预先定义的有效超竞争标准。完成的pilot有 {sum(pilots.status=='completed')} 个；中断/失败pilot保留在独立记录中。费用账本共 **${spending['spent']:.6f}**，其中未知处理状态的保守计费 **${uncertain:.6f}**，总授权预算：{budget_label(spending)}（预算变更按用户指令记录）。下文仅依据已保存数据陈述结论。
 
 ## 研究问题与博弈机制
 
@@ -133,7 +134,7 @@ v1.0 pilot曾出现超过60词和多句话输出；失败样本未被清洗成�
         bymode=costs.merge(primary[['id','mode']],left_on='run',right_on='id').groupby('mode',as_index=False)[['calls','cost_usd','compressor_input_tokens','final_archive_bytes','max_visible_memory_words']].mean()
         text+='\n正式实验按记忆模式汇总的每run平均资源（包含全部H）：\n\n'
         text+=table(bymode,list(bymode.columns))
-    text+=f'''\n总账本${spending['spent']:.6f}，尚有${spending['budget']-spending['spent']:.6f}预算空间（不代表账户余额）。未知服务端处理的尝试按预留上界计入，不把估算冒充发票。推理tokens已含于输出tokens，不重复收费。
+    text+=f'''\n总账本${spending['spent']:.6f}，{allowance}未知服务端处理的尝试按预留上界计入，不把估算冒充发票。推理tokens已含于输出tokens，不重复收费。
 
 压缩条件减少seller读取的记忆文本，但仍维护完整原始archive，并为每轮重读全档案支付压缩费用。因此结论只涉及decision-context compression，不能称为整个系统只需要一句记忆。history/memory/archive分量以UTF‑8字节保守上界记录，真实API tokens按usage统计；tokenizer端点在当前环境被拒绝访问，此处不报告虚构的精确分词量。
 

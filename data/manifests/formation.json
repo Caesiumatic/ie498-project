@@ -37,8 +37,8 @@
   "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
   "repeats": 2,
   "desired_repeats": 3,
-  "estimated_batch_cost_usd": 9.470587685502899,
-  "batch_cost_safety_factor": 1.04,
+  "estimated_batch_cost_usd": 8.5988149,
+  "batch_cost_safety_factor": 1.2,
   "paper_cost_per_remaining_round": 0.003,
   "budget_at_freeze": {
     "spent": 4.82975667,
@@ -179,7 +179,22 @@
     "condition": "Remaining budget >= 2 * completed_batch_1_cost * 1.20 + remaining_paper_reserve + 0.10",
     "uses_behavior": false
   },
-  "code_commit": "e67e80e016a6aab0a1e336472a741c08e7f0af47",
+  "original_estimated_batch_cost_usd": 9.470587685502899,
+  "cost_only_extension_decision": {
+    "completed_batch_1_cost_usd": 8.5988149,
+    "balance": {
+      "spent": 13.526399795,
+      "reserved": 0,
+      "budget": 25.0
+    },
+    "remaining_usd": 11.473600205,
+    "required_for_three_repeats_usd": 20.737155760000004,
+    "remaining_paper_reserve": 0.0,
+    "final_repeats": 2,
+    "uses_behavior": false,
+    "decision_before_batch_2": true
+  },
+  "code_commit": "91ec632c755cfe0ae7a8dcdc5c9a95198575a652",
   "runs": [
     {
       "repetition": 1,

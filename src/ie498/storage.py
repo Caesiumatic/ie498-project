@@ -7,6 +7,14 @@ import time
 from .memory import digest
 
 
+def remaining_budget(balance):
+    return float('inf') if balance['budget'] is None else balance['budget']-balance['spent']-balance['reserved']
+
+
+def budget_label(balance):
+    return '无上限（用户授权）' if balance['budget'] is None else f"${balance['budget']:.2f}"
+
+
 def atomic_json(path, value):
     path = Path(path); path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + ".tmp")
@@ -61,7 +69,7 @@ class Store:
           id INTEGER PRIMARY KEY AUTOINCREMENT,run_id TEXT REFERENCES runs(id),
           checkpoint INTEGER NOT NULL,commit_hash TEXT NOT NULL,prompt_hash TEXT NOT NULL,started REAL NOT NULL);
         ''')
-        self.db.execute("INSERT OR IGNORE INTO settings VALUES('budget',?)", (str(budget),))
+        self.db.execute("INSERT OR IGNORE INTO settings VALUES('budget',?)", ('unlimited' if budget is None else str(budget),))
         self.db.commit()
 
     def rows(self, sql, args=()):
@@ -81,7 +89,8 @@ class Store:
 
     def spending(self):
         row = self.rows("SELECT COALESCE(SUM(cost),0) spent, COALESCE(SUM(CASE WHEN status='pending' THEN reserved ELSE 0 END),0) reserved FROM api_attempts")[0]
-        row["budget"] = float(self.rows("SELECT value FROM settings WHERE key='budget'")[0]["value"])
+        value=self.rows("SELECT value FROM settings WHERE key='budget'")[0]["value"]
+        row["budget"] = None if value=='unlimited' else float(value)
         return row
 
     def add_run(self, run, config, commit, prompts, parent=None, checkpoint=0):
@@ -115,7 +124,7 @@ class Store:
     def reserve(self, row):
         with self.db:
             balance = self.spending()
-            if balance["spent"] + balance["reserved"] + row["reserved"] > balance["budget"] + 1e-10:
+            if row['reserved'] > remaining_budget(balance) + 1e-10:
                 raise BudgetStop("Project spending plus in-flight reservations would exceed budget")
             self.db.execute("""INSERT INTO api_attempts(id,call_id,attempt,run_id,t,agent,purpose,status,
               request_hash,request_json,reserved,created) VALUES(?,?,?,?,?,?,?,'pending',?,?,?,?)""",

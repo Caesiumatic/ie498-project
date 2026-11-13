@@ -111,6 +111,21 @@ def test_budget_reservation_and_unknown_recovery(store,config):
     with pytest.raises(BudgetStop):store.reserve(dict(row,id='two',call_id='other'))
 
 
+def test_unlimited_budget_persists_and_still_accounts_for_usage(tmp_path,config):
+    root=tmp_path/'uncapped'
+    s=Store(root,budget=None)
+    create_run(s,'uncapped',config)
+    row=dict(id='one',call_id='uncapped:1:0:seller',attempt=1,run_id='uncapped',t=1,agent=0,purpose='seller',
+             request_hash='hash',request_json='{}',reserved=100)
+    s.reserve(row)
+    s.finish_attempt('one','uncertain',100)
+    s.close()
+    s=Store(root)  # Reopening must not restore the default finite cap.
+    s.reserve(dict(row,id='two',call_id='uncapped:1:1:seller',agent=1))
+    assert s.spending()=={'spent':100,'reserved':100,'budget':None}
+    s.close()
+
+
 def test_raw_response_reconciliation(store,config):
     create_run(store,'raw',config)
     body=request_body(config,'hello','seller');call='raw:1:0:seller'
