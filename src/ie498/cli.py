@@ -80,7 +80,7 @@ def main():
             if args.run:asyncio.run(run_batch(store,[args.child]))
             print(args.child);return
         if args.command=='resume':
-            ids=args.runs or [r['id'] for r in store.rows("SELECT id FROM runs WHERE status NOT IN ('completed','paused_protocol','paused_budget_plan','paused_manual')")]
+            ids=args.runs or [r['id'] for r in store.rows("SELECT id FROM runs WHERE status NOT IN ('completed','paused_protocol','paused_budget_plan','paused_manual','not_started_budget')")]
             asyncio.run(run_batch(store,ids,args.concurrency));return
         if args.command=='run':
             if c['stage'] in ('formation','maintenance','shock'):

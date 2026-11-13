@@ -80,6 +80,7 @@ v1.0 pilot曾出现超过60词和多句话输出；失败样本未被清洗成�
 
 '''
     text+=table(pilots,['id','status','rounds_completed','CI','effective_success','cost_usd'])
+    text+='\n未完成pilot的指标仅作诊断，不能作为300轮终点评价；成本校准调用不构成行为run。\n'
     freeze=ROOT/'configs/formation-freeze.json'
     if freeze.exists():
         f=json.loads(freeze.read_text())
