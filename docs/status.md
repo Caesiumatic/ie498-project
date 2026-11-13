@@ -1,6 +1,6 @@
-# Status: five-repeat extension in progress
+# Status: five-repeat extension paused by provider billing
 
-The frozen extension adds 30 bullet-memory runs and 5 fresh formal H100 PLANS/INSIGHTS runs; target: 80 formal runs, 24,000 rounds. Existing results below describe the completed three-repeat delivery. The original 45 runs remain immutable.
+The frozen extension adds 30 bullet-memory runs and 5 fresh formal H100 PLANS/INSIGHTS runs; target: 80 formal runs, 24,000 rounds. Existing results below describe the completed three-repeat delivery. The original 45 runs remain immutable. The extension completed 7,078/10,500 new rounds before the provider returned HTTP 429 with `credit_balance_exhausted` / `insufficient_quota`. All 35 additional runs are paused before their 300-round endpoints; no partial run enters completed-run summaries. The current ledger is $42.15208822 ($9.95304360 added), reserved=0. There were 85 rejected HTTP 429 attempts with no usage or cost. The paused-data audit passed for 57,680 attempts and 22,712 rounds, including exact fingerprints for all 45 original runs and 2,614 paper memory views. Snapshot: `data/backups/batches/20261113T190422997041Z`. All 28 tests pass; the new billing-stop test prevents retrying this error category. After funding, remove the 35 extension `.pause` markers and resume `scripts/run_extension.py`. See `data/manifests/extension-billing-pause.json` and `reports/extension_execution.json`.
 
 - Model: GPT‑6 Luna with low reasoning for every live seller and compressor.
 - Formal experiment: 15 conditions×3 independent repeats×300 rounds; all 45 runs and 13,500 rounds completed.

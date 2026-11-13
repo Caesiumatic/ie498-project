@@ -1,0 +1,153 @@
+{
+  "at_utc": "2026-11-13T19:03:50.354855+00:00",
+  "reason": "Provider HTTP429: error.type=insufficient_quota, error.code=credit_balance_exhausted",
+  "balance": {
+    "spent": 42.15208822,
+    "reserved": 0,
+    "budget": null
+  },
+  "runs": [
+    {
+      "id": "formation-r4-h5-compressed",
+      "rounds": 127
+    },
+    {
+      "id": "formation-r4-h100-clear",
+      "rounds": 228
+    },
+    {
+      "id": "formation-r4-h0-compressed",
+      "rounds": 136
+    },
+    {
+      "id": "formation-r4-h20-clear",
+      "rounds": 227
+    },
+    {
+      "id": "formation-r4-h100-compressed",
+      "rounds": 128
+    },
+    {
+      "id": "formation-r4-h0-clear",
+      "rounds": 248
+    },
+    {
+      "id": "formation-r4-h1-clear",
+      "rounds": 219
+    },
+    {
+      "id": "formation-r4-h20-full",
+      "rounds": 254
+    },
+    {
+      "id": "formation-r4-h5-full",
+      "rounds": 257
+    },
+    {
+      "id": "formation-r4-h20-compressed",
+      "rounds": 126
+    },
+    {
+      "id": "formation-r4-h100-full",
+      "rounds": 226
+    },
+    {
+      "id": "formation-r4-h0-full",
+      "rounds": 274
+    },
+    {
+      "id": "formation-r4-h1-full",
+      "rounds": 263
+    },
+    {
+      "id": "formation-r4-h5-clear",
+      "rounds": 220
+    },
+    {
+      "id": "formation-r4-h1-compressed",
+      "rounds": 123
+    },
+    {
+      "id": "formation-r5-h100-compressed",
+      "rounds": 125
+    },
+    {
+      "id": "formation-r5-h0-full",
+      "rounds": 269
+    },
+    {
+      "id": "formation-r5-h100-full",
+      "rounds": 253
+    },
+    {
+      "id": "formation-r5-h1-clear",
+      "rounds": 223
+    },
+    {
+      "id": "formation-r5-h1-compressed",
+      "rounds": 123
+    },
+    {
+      "id": "formation-r5-h20-clear",
+      "rounds": 224
+    },
+    {
+      "id": "formation-r5-h5-full",
+      "rounds": 258
+    },
+    {
+      "id": "formation-r5-h20-full",
+      "rounds": 257
+    },
+    {
+      "id": "formation-r5-h5-clear",
+      "rounds": 219
+    },
+    {
+      "id": "formation-r5-h0-clear",
+      "rounds": 252
+    },
+    {
+      "id": "formation-r5-h1-full",
+      "rounds": 253
+    },
+    {
+      "id": "formation-r5-h20-compressed",
+      "rounds": 113
+    },
+    {
+      "id": "formation-r5-h100-clear",
+      "rounds": 233
+    },
+    {
+      "id": "formation-r5-h0-compressed",
+      "rounds": 135
+    },
+    {
+      "id": "formation-r5-h5-compressed",
+      "rounds": 127
+    },
+    {
+      "id": "formation-paper-r1-h100",
+      "rounds": 190
+    },
+    {
+      "id": "formation-paper-r2-h100",
+      "rounds": 192
+    },
+    {
+      "id": "formation-paper-r3-h100",
+      "rounds": 206
+    },
+    {
+      "id": "formation-paper-r4-h100",
+      "rounds": 189
+    },
+    {
+      "id": "formation-paper-r5-h100",
+      "rounds": 181
+    }
+  ],
+  "pending_attempts": 0,
+  "resume": "Remove the extension .pause markers after account funding, then run scripts/run_extension.py; accepted responses reused only for identical logical calls"
+}

@@ -4,11 +4,11 @@ This experiment tests how visible market history and strategic memory shape pric
 
 The runner records each decision, memory view, settlement, and API cost, and resumes interrupted runs by logical call ID. Start with the [results](reports/research_report.md), [research protocol](docs/protocol.md), or [current status](docs/status.md); the [decision log](docs/decisions.md) records protocol choices.
 
-## Five-repeat extension in progress
+## Five-repeat extension paused: API credits exhausted
 
-The user requested an extension after reviewing the three-repeat results. The frozen design now contains **75 bullet-memory runs plus 5 formal H100 paper-reference runs**, each lasting 300 rounds. The original 45 runs are retained; 30 additional bullet runs and 5 fresh paper runs are being generated. The reference overwrites PLANS/INSIGHTS each round, rather than appending bullets. Its labels r1–r3 supplement the earlier sample counts but were added later; historical pilots are not relabeled.
+The user requested an extension after reviewing the three-repeat results. The frozen design now contains **75 bullet-memory runs plus 5 formal H100 paper-reference runs**, each lasting 300 rounds. The original 45 runs are retained; The 30 additional bullet runs and 5 fresh paper runs are paused after 7,078 of 10,500 new rounds because the provider returned `credit_balance_exhausted`. No new run has reached its 300-round endpoint yet; partial trajectories are not formal endpoint results. The ledger is $42.15208822, including $9.95304360 for this extension, with no in-flight reservations. The reference overwrites PLANS/INSIGHTS each round, rather than appending bullets. Its labels r1–r3 supplement the earlier sample counts but were added later; historical pilots are not relabeled.
 
-See the [paper-method audit](docs/paper_reference_method.md), [frozen extension](configs/extension-freeze.json), and [performance measurements](docs/performance.md). Resume the frozen extension with `uv run python scripts/run_extension.py`. The original three-repeat report is preserved as [three_repeat_report.md](reports/three_repeat_report.md). Results below describe that completed delivery until the expanded report is regenerated.
+See the [paper-method audit](docs/paper_reference_method.md), [frozen extension](configs/extension-freeze.json), and [performance measurements](docs/performance.md). After funding the API account, remove only the extension run `.pause` markers listed in `data/manifests/extension-billing-pause.json`, then resume with `uv run python scripts/run_extension.py`. Saved accepted responses are reused only for their original logical calls. The original three-repeat report is preserved as [three_repeat_report.md](reports/three_repeat_report.md). Results below describe that completed delivery until the expanded report is regenerated.
 
 ## Completed three-repeat results
 
@@ -50,12 +50,12 @@ uv run ie498 --data data/runs/mock analyze --out reports/mock
 # 2. Paid calls; retain the same live database for cumulative accounting
 uv run ie498 --data data/runs/live smoke --concurrency 1
 uv run ie498 --data data/runs/live pilot --concurrency 6
-uv run ie498 --data data/runs/live plan --repeats 3
+uv run ie498 --data data/runs/live plan --repeats 5
 
 # 3. Freeze configs/formation-freeze.json after complete pilots
 #    Include the complete base.json config, prompt_hash, repeats, and cost basis
-uv run ie498 --data data/runs/live formation --repeats 3 --batch 1
-# The user removed the spending cap and selected 3 repeats per condition.
+uv run ie498 --data data/runs/live formation --repeats 5 --batch 1
+# The user removed the spending cap and selected 5 repeats per condition.
 # The stage runner also resumes the unfinished paper pilot:
 uv run python scripts/run_formation.py
 

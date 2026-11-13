@@ -45,6 +45,9 @@ def main():
     planned_reference=sum(r['config']['stage']=='formation_reference' for r in planned)
     progress=(f"The frozen extension targets {planned_primary} bullet-memory runs and {planned_reference} separate paper-reference runs ({len(planned)} total). Current completed counts are {len(primary)} and {len(reference)}, respectively. "
               + ('The planned formation sample is complete.' if len(primary)==planned_primary and len(reference)==planned_reference else 'The extension is not yet complete; the tables below are interim summaries of completed runs.')) if extension else 'No extension freeze is available; only the recorded completed sample is reported.'
+    pause_note=''
+    if (ROOT/'data/manifests/extension-billing-pause.json').exists() and ((merged.stage.isin(['formation','formation_reference'])) & (merged.status=='paused_access')).any():
+        pause_note='The extension is paused because the provider returned credit_balance_exhausted / insufficient_quota. Account funding is required before resuming the saved checkpoints. Partial runs are excluded from endpoint summaries; see data/manifests/extension-billing-pause.json.'
     audit_path=ROOT/'reports/data_audit.json'
     audit=json.loads(audit_path.read_text()) if audit_path.exists() else {}
     audit_counts=audit.get('counts',{})
@@ -65,6 +68,8 @@ This project studies visible market-history windows H∈{{0,1,5,20,100}} and cle
 There are **{len(primary)} completed formal bullet-memory formation runs**, of which **{successes}** meet the predefined effective supracompetitive criterion, and **{len(reference)} completed formal paper-reference runs**, of which **{reference_successes}** meet the same criterion. The two architectures are summarized separately; their success counts are not pooled. There are {sum(pilots.status=='completed')} complete pilots; interrupted and failed pilots remain separately recorded. The cost ledger totals **${spending['spent']:.6f}**, including **${uncertain:.6f}** in conservative charges for requests with unknown processing status. The budget is {budget_label(spending)}. Conclusions below use saved data only.
 
 {progress}
+
+{pause_note}
 
 After reviewing the original three-repeat results, the user requested a fixed expansion to five repeats and a new H=100 condition using the paper's overwritten PLANS/INSIGHTS memory. The first 45 runs remain intact. Additional runs complete repeats 4–5 of the 15-cell matrix; five fresh paper-reference runs supply the new comparison, including labels 1–3. These labels do not imply that the added condition ran historically alongside the original repeats or used matched random draws. Historical paper pilots remain excluded.
 

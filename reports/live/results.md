@@ -1,6 +1,6 @@
 # IE498 experiment results
 
-The database contains 97 planned runs, of which 61 are completed. The cost ledger is $32.199045; budget: uncapped (user-authorized).
+The database contains 102 planned runs, of which 61 are completed. The cost ledger is $42.152088; budget: uncapped (user-authorized).
 
 Live experiments, mock, smoke, and pilot runs are labeled separately. Only completed formation runs enter the main matrix. Each complete duopoly run is an independent statistical unit; rounds within a run are not independent observations.
 
@@ -21,6 +21,14 @@ Live experiments, mock, smoke, and pilot runs are labeled separately. Only compl
 | full | 5 | 3 | 0/3 | -1.908 |
 | full | 20 | 3 | 0/3 | -1.896 |
 | full | 100 | 3 | 0/3 | -1.276 |
+
+## Added paper-reference comparison (H=100)
+
+This condition overwrites PLANS/INSIGHTS each round. It was added after inspecting the original three-repeat results; its five new formal runs are separate from pilots and from the 15-cell bullet-memory matrix. Repeat labels do not imply contemporaneous or paired sampling.
+
+No completed formal paper-reference runs are available yet; historical paper pilots are not substituted.
+
+See paper_reference_conditions.csv and paper_reference_comparison.csv for separate condition estimates and uncertainty intervals.
 
 See runs.csv for complete status, resources.csv for calls and resources, and benchmarks.json for numerical benchmarks. Success proportions use Wilson intervals; continuous metrics use run-level bootstrap intervals (none for n<2).
 

@@ -189,8 +189,9 @@ class Caller:
                 result = self.accept_raw(row, raw, config)
             if result is not None:
                 return result
-            code = raw.get("error", {}).get("code") if isinstance(raw.get("error"), dict) else None
-            if raw.get("http_status") in (400,401,403,404) or code in ("insufficient_quota", "billing_hard_limit_reached"):
+            error = raw.get("error") if isinstance(raw.get("error"), dict) else {}
+            code = error.get("code")
+            if raw.get("http_status") in (400,401,403,404) or error.get("type")=="insufficient_quota" or code in ("insufficient_quota", "billing_hard_limit_reached", "credit_balance_exhausted"):
                 raise PermanentAPIError(f"API HTTP {raw.get('http_status')}: {code or 'request rejected'}")
             if number < config["max_attempts"]:
                 await asyncio.sleep(min(2**number, 8))
