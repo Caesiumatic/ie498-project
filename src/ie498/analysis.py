@@ -58,6 +58,27 @@ def condition_summary(g,mode,h):
     return aggregate
 
 
+def subscription_accounting(attempts, data_root):
+    """Separate observed subscription work from the API cash ledger.
+
+    Wire files identify interrupted attempts whose usage never arrived. Their
+    missing token counts remain missing, rather than being priced or estimated.
+    """
+    selected=[]
+    for attempt in attempts:
+        usage=json.loads(attempt['usage'] or '{}')
+        if usage.get('billing_path')=='chatgpt_subscription' or (Path(data_root)/f"wire_requests/{attempt['id']}.json").exists():
+            selected.append(usage)
+    return dict(
+        subscription_calls=len(selected),
+        subscription_input_tokens=sum(u.get('prompt_tokens',0) for u in selected),
+        subscription_output_tokens=sum(u.get('completion_tokens',0) for u in selected),
+        subscription_reasoning_tokens=sum(u.get('completion_tokens_details',{}).get('reasoning_tokens',0) for u in selected),
+        subscription_calls_without_usage=sum('prompt_tokens' not in u or 'completion_tokens' not in u for u in selected),
+        api_cash_ledger_usd=sum(a['cost'] for a in attempts),
+    )
+
+
 def analyze(store,destination):
     out=Path(destination);out.mkdir(parents=True,exist_ok=True)
     runs=store.rows('SELECT * FROM runs ORDER BY id')
@@ -90,6 +111,7 @@ def analyze(store,destination):
         for entry in store.rows('SELECT t,agent,text,call_id FROM memory_entries WHERE run_id=? AND t>? ORDER BY t,agent',(run['id'],run['checkpoint'])):
             memory_audit.append(dict(run=run['id'],**entry,word_count=len(entry['text'][2:].split()),utf8_bytes=len(entry['text'].encode())))
         resources.append(dict(run=run['id'],stage=c['stage'],calls=len(attempts),
+            **subscription_accounting(attempts,store.root),
             seller_calls=sum(a['purpose']=='seller' for a in attempts),compressor_calls=sum(a['purpose']=='compressor' for a in attempts),
             retries=sum(a['attempt']>1 for a in attempts),uncertain=sum(a['status']=='uncertain' for a in attempts),
             input_tokens=sum(u.get('prompt_tokens',0) for u in usage),
@@ -132,7 +154,10 @@ def analyze(store,destination):
     paired=_paired(store,runs,out)
     complete=[r for r in summary if r['status']=='completed']
     text='# IE498 experiment results\n\n'
-    text+=f"The database contains {len(runs)} planned runs, of which {len(complete)} are completed. The cost ledger is ${store.spending()['spent']:.6f}; budget: {budget_label(store.spending())}.\n\n"
+    text+=f"The database contains {len(runs)} planned runs, of which {len(complete)} are completed. The API cash ledger is ${store.spending()['spent']:.6f}; budget: {budget_label(store.spending())}. This ledger includes conservative estimates for uncertain API-key requests and is not an invoice.\n\n"
+    subscription_calls=sum(r['subscription_calls'] for r in resources)
+    if subscription_calls:
+        text+=f"There are {subscription_calls} recorded ChatGPT subscription attempts. Their observed tokens are reported separately in resources.csv; they add no API cash charge to this ledger. The retained cost_usd column is an alias for api_cash_ledger_usd, not total resource cost. Mixed billing paths prevent interpreting pooled dollar differences as memory-efficiency effects.\n\n"
     text+='Live experiments, mock, smoke, and pilot runs are labeled separately. Only completed formation runs enter the main matrix. Each complete duopoly run is an independent statistical unit; rounds within a run are not independent observations.\n\n'
     if groups:
         text+='| Mode | H | n | Success | Mean CI |\n|---|---:|---:|---:|---:|\n'

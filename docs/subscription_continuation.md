@@ -1,0 +1,40 @@
+# Continuation with ChatGPT subscription authorization
+
+The user authorized the remaining **3,422 rounds** through Pro Agent/Codex subscription usage on 2026-11-13. Keep `gpt-6-luna`, `reasoning.effort=low`, the original prompt text and memory rules, and the frozen five-repeat design. Do not run a quota check or an interface-equivalence experiment. The 45 completed original runs and all accepted partial-round calls remain unchanged.
+
+## Official interface
+
+Use [Sign in with ChatGPT](https://developers.openai.com/siwc/token-sharing-open-source/sign-in) to authorize this experiment's own OAuth client, then call the [public Responses endpoint](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference). This uses subscription entitlement rather than an API key or API credit grants. The existing Codex CLI login is not imported or scraped. Codex's conversation harness is not used for seller inference because it adds agent context beyond the experiment prompt.
+
+The request contains one user message, the selected model and reasoning level, `store=false`, and `stream=true`. The original strict JSON schema maps to `text.format`; paper-reference outputs retain their original plain-text format. There are no tools, developer instructions, persisted conversation IDs, or previous-response references.
+
+The [subscription interface limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations) require omitting the original server-side 2,048/4,096 output-token caps. The Chat Completions cache and service-tier parameters are also omitted and recorded for each request. This is a disclosed interface amendment, not a claim of identical sampling distributions. The original output parser, retry ceiling, market, visible history, and memory update logic remain unchanged. There is no automatic fallback to paid API calls or another model.
+
+## Sign-in and resume
+
+On the machine hosting the browser and callback listener:
+
+```bash
+uv run python scripts/subscription_login.py --begin --open-browser
+```
+
+Authorize **IE498 Memory Pricing** with the intended ChatGPT account. Credentials are stored atomically with owner-only permissions in the ignored `data/auth/` directory. The helper validates PKCE state, the signed ID token, nonce, account identity, and granted scope. It refreshes rotating tokens under a cross-process lock. Credentials and callback codes are never printed or included in experiment backups.
+
+The official callback is `http://127.0.0.1:<port>/auth/callback`: a browser on a different computer cannot reach the VM's loopback listener. Use a browser on the same cloud desktop, an existing secure loopback-forwarding connection, or follow the [official self-hosted VM procedure](https://developers.openai.com/siwc/token-sharing-open-source/self-hosted-vms) to sign in locally and securely transfer this application's protected credential record. Do not paste credentials into chat or commit them to Git.
+
+After successful authorization:
+
+```bash
+uv run python scripts/run_extension.py \
+  --transport chatgpt_subscription_responses --resume-paused
+```
+
+The runner checks token readiness without querying balances or subscription limits, validates the frozen plan, records a new resume manifest, then removes pause markers only for unfinished frozen runs. It retains historical manifests and attempt numbers. The next requests are actual remaining experimental calls, not validation samples.
+
+## Provenance and accounting
+
+`requests/` and `api_attempts.request_json` retain the original canonical scientific request, allowing accepted calls to be reused by logical ID across the interface change. `wire_requests/` records the exact subscription HTTP body. Raw records retain actual Responses events and terminal response objects, plus both hashes and the transport amendment. Only a completed response with the selected model and valid original-format output can be accepted.
+
+Subscription token usage is recorded separately with `billing_path=chatgpt_subscription`. Its API-cash ledger contribution is zero; this does not mean no subscription entitlement was consumed. The pre-switch API ledger remains $42.15208822. Monetary costs across the two interfaces are not directly comparable. Stream interruptions preserve uncertainty rather than inventing token usage. Every new resume epoch records its checkpoints and code commit.
+
+Status at implementation: all 63 offline tests pass, and the complete data audit confirms all 45 original run fingerprints and the unchanged 57,680 recorded attempts. The transport and login helper are ready; the experiment is still paused pending this application's official sign-in. No subscription inference has completed yet.

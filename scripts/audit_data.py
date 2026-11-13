@@ -9,6 +9,7 @@ from ie498.agents import request_body,cost_from_usage
 from ie498.environment import Market
 from ie498.memory import build_compressor,build_seller,digest,parse_output,prompt_hash,visible_history
 from ie498.storage import Store,atomic_json
+from ie498 import subscription_transport as subscription
 
 
 def verify_original_run_immutability(store, manifest_path):
@@ -33,11 +34,43 @@ def verify_reference_memory_view(history, t, agent, view):
     assert view['text']==previous['plans']+'\n'+previous['insights'],('Paper memory overwrite mismatch',t,agent)
 
 
+def verify_subscription_attempt(store, row, canonical, raw, config):
+    """Verify the actual subscription request without rewriting canonical history.
+
+    The canonical Chat Completions request identifies the scientific call across
+    interfaces. The separate wire request records exactly what Responses received.
+    A crash can leave that request without a response; it must still be checked.
+    """
+    expected_path=f"wire_requests/{row['id']}.json"
+    wire_path=store.root/expected_path
+    assert wire_path.exists(),('Missing subscription wire request',row['id'])
+    wire=json.loads(wire_path.read_text())
+    assert wire==subscription.subscription_request(canonical),('Subscription request changed',row['id'])
+    assert row['reserved']==0 and row['cost']==0,('Subscription request entered API cash ledger',row['id'])
+    if raw is None:
+        assert row['status']=='uncertain',('Missing subscription response',row['id'])
+        return None
+    assert raw.get('transport')==subscription.TRANSPORT,('Missing subscription transport marker',row['id'])
+    provenance=raw.get('transport_provenance',{})
+    assert provenance=={
+        'canonical_request_sha256':row['request_hash'],
+        'wire_request_sha256':digest(wire),
+        'wire_request_path':expected_path,
+        'endpoint':'https://api.openai.com/v1/responses',
+        'billing_path':'chatgpt_subscription',
+        'interface_changes':subscription.transport_metadata(canonical),
+    },('Subscription provenance mismatch',row['id'])
+    assert json.loads(row['usage'] or '{}')==subscription.normalized_usage(raw),('Subscription usage mismatch',row['id'])
+    if row['status']=='accepted':
+        return subscription.extract_text(raw,config['model'])
+    return None
+
+
 def main():
     store=Store(ROOT/'data/runs/live',readonly=True)
     assert store.spending()['reserved']==0,'Stop requests before final audit'
     assert not store.rows("SELECT id FROM runs WHERE status='running'"),'Stop the runner before final audit'
-    counts=dict(verified_original_runs=0,verified_reference_memory_views=0,runs=0,rounds=0,memory_entries=0,attempts=0,accepted_attempts=0,verified_seller_inputs=0,verified_compressor_inputs=0,reparsed_current_outputs=0)
+    counts=dict(verified_original_runs=0,verified_reference_memory_views=0,runs=0,rounds=0,memory_entries=0,attempts=0,accepted_attempts=0,verified_seller_inputs=0,verified_compressor_inputs=0,reparsed_current_outputs=0,verified_subscription_requests=0,accepted_subscription_attempts=0)
     fingerprint_manifest=ROOT/'data/manifests/pre-extension-original-run-hashes.json'
     counts['verified_original_runs']=verify_original_run_immutability(store,fingerprint_manifest)
     configs={};hashes={}
@@ -91,24 +124,36 @@ def main():
                 accepted=store.accepted(call,digest(request_body(c,prompt,'seller')))
                 assert accepted==row['actions'][agent],call
                 counts['verified_seller_inputs']+=1
-    for stored_row in store.db.execute('SELECT id,request_hash,raw_path,raw_sha256,status,run_id,purpose,parsed,cost FROM api_attempts'):
+    for stored_row in store.db.execute('SELECT id,request_hash,request_json,raw_path,raw_sha256,status,run_id,purpose,parsed,cost,reserved,usage FROM api_attempts'):
         row=dict(stored_row)
         counts['attempts']+=1
         request=store.root/f"requests/{row['id']}.json"
         assert request.exists(),row['id']
-        assert digest(json.loads(request.read_text()))==row['request_hash'],row['id']
+        canonical=json.loads(request.read_text())
+        assert digest(canonical)==row['request_hash'],row['id']
+        assert canonical==json.loads(row['request_json']),row['id']
+        raw=None
         if row['raw_path']:
             raw_file=store.root/row['raw_path']
             assert digest(raw_file.read_text())==row['raw_sha256'],row['id']
+            raw=json.loads(raw_file.read_text())
+        is_subscription=(raw is not None and raw.get('transport')==subscription.TRANSPORT) or (store.root/f"wire_requests/{row['id']}.json").exists()
+        if is_subscription:
+            text=verify_subscription_attempt(store,row,canonical,raw,configs[row['run_id']])
+            counts['verified_subscription_requests']+=1
         if row['status']=='accepted':
             counts['accepted_attempts']+=1
-            raw=json.loads((store.root/row['raw_path']).read_text())
-            assert raw['model']==configs[row['run_id']]['model']
+            assert raw is not None,row['id']
+            if is_subscription:
+                counts['accepted_subscription_attempts']+=1
+            else:
+                assert raw['model']==configs[row['run_id']]['model']
+                text=raw['choices'][0]['message']['content']
             if hashes[row['run_id']]==prompt_hash():
-                reparsed=parse_output(raw['choices'][0]['message']['content'],row['purpose'],configs[row['run_id']]['architecture'])
+                reparsed=parse_output(text,row['purpose'],configs[row['run_id']]['architecture'])
                 assert reparsed==json.loads(row['parsed']),row['id']
                 counts['reparsed_current_outputs']+=1
-            if raw.get('usage'):
+            if not is_subscription and raw.get('usage'):
                 expected=cost_from_usage(raw['usage'],configs[row['run_id']]['prices'])
                 assert abs(expected-row['cost'])<1e-10,row['id']
     spending=store.spending()
@@ -117,7 +162,7 @@ def main():
     result={'passed':True,'counts':counts,'spending':spending,'prompt_hash':prompt_hash(),
             'checks':['original_run_immutability','reference_memory_overwrite','consecutive rounds','immutable memory and fork lineage','economic recomputation',
                       'price intervention arithmetic','private input reconstruction for current prompts',
-                      'full archive compressor input reconstruction','accepted response provenance','reparse current-protocol raw outputs','raw/request checksums','usage-cost reconciliation','budget']}
+                      'full archive compressor input reconstruction','accepted response provenance','reparse current-protocol raw outputs','raw/request checksums','subscription wire request and usage provenance','subscription requests excluded from API cash ledger','usage-cost reconciliation','budget']}
     atomic_json(ROOT/'reports/data_audit.json',result);print(json.dumps(result,indent=2));store.close()
 
 

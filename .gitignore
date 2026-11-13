@@ -8,6 +8,7 @@ __pycache__/
 data/runs/
 data/backups/
 data/restored/
+data/auth/
 *.sqlite*
 *.egg-info/
 .cache/

@@ -27,7 +27,10 @@ def snapshot(store, destination):
     # Copy only immutable records referenced by the consistent SQLite snapshot.
     db = sqlite3.connect(dest/'experiments.sqlite'); db.row_factory=sqlite3.Row
     for row in db.execute('SELECT id,raw_path FROM api_attempts'):
-        for rel in [row['raw_path'],f"requests/{row['id']}.json"]:
+        # Subscription calls preserve the historical canonical scientific
+        # request plus a separate exact Responses wire request. Copy only these
+        # per-attempt records, never the application's authorization directory.
+        for rel in [row['raw_path'],f"requests/{row['id']}.json",f"wire_requests/{row['id']}.json"]:
             if rel and (store.root/rel).exists():
                 (dest/rel).parent.mkdir(parents=True,exist_ok=True)
                 # Reuse only verified immutable payloads from an earlier backup,

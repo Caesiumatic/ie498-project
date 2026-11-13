@@ -37,7 +37,7 @@ def summarize(data, freeze):
     rounds = {r['run_id']: r['n'] for r in db.execute(
         f'SELECT run_id,COUNT(*) n FROM rounds WHERE run_id IN ({placeholders}) GROUP BY run_id', ids)}
     attempts = list(db.execute(
-        f'SELECT run_id,created,status,cost,usage,raw_path FROM api_attempts '
+        f'SELECT id,run_id,created,status,cost,usage,raw_path FROM api_attempts '
         f'WHERE run_id IN ({placeholders}) ORDER BY created', ids))
     ledger = dict(db.execute("SELECT SUM(cost) spent, SUM(CASE WHEN status='pending' THEN reserved ELSE 0 END) reserved FROM api_attempts").fetchone())
     db.rollback()
@@ -56,12 +56,20 @@ def summarize(data, freeze):
         }
     statuses = Counter(r['status'] for r in attempts)
     tokens = Counter()
+    subscription_tokens = Counter()
+    subscription_calls = 0
+    subscription_without_usage = 0
     http_errors = Counter()
     latest = {}
     for row in attempts:
         usage = json.loads(row['usage'] or '{}')
         for key in ('prompt_tokens', 'completion_tokens'):
             tokens[key] += usage.get(key, 0)
+        if usage.get('billing_path') == 'chatgpt_subscription' or (data / f"wire_requests/{row['id']}.json").exists():
+            subscription_calls += 1
+            subscription_without_usage += 'prompt_tokens' not in usage or 'completion_tokens' not in usage
+            for key in ('prompt_tokens', 'completion_tokens'):
+                subscription_tokens[key] += usage.get(key, 0)
         latest[row['run_id']] = row
         # Inspect only unsuccessful raw responses, never print request/response text.
         if row['status'] not in ('accepted', 'pending') and row['raw_path']:
@@ -92,6 +100,10 @@ def summarize(data, freeze):
         'ledger_spent_usd': ledger['spent'], 'ledger_reserved_usd': ledger['reserved'],
         'ledger_delta_usd': ledger['spent'] - baseline_spent,
         'selected_run_cost_usd': sum(r['cost'] for r in attempts),
+        'ledger_interpretation': 'API cash-ledger estimates only; excludes subscription fee or allowance valuation. Subscription attempts add zero API cash charge, not zero computational use.',
+        'subscription_calls': subscription_calls,
+        'subscription_calls_without_usage': subscription_without_usage,
+        'subscription_token_usage': dict(subscription_tokens),
         'first_request_utc': datetime.fromtimestamp(start, timezone.utc).isoformat() if start else None,
         'elapsed_seconds': elapsed, 'token_usage': dict(tokens),
         'actual_tokens_per_elapsed_second': actual_tokens / elapsed if elapsed else None,
@@ -100,7 +112,8 @@ def summarize(data, freeze):
             'extension_first_to_last_request_start_seconds': first_to_last,
             'extension_actual_tokens_per_start_span_second': comparable_tps,
             'ratio_to_baseline': comparable_tps / BASELINE_BATCH3['actual_tokens_per_second'] if comparable_tps else None,
-            'interpretation': 'Descriptive only; workload, output lengths and service latency differ. In-progress usage excludes pending calls. Elapsed includes pauses; completed end is latest final-response file mtime.',
+            'mixed_interfaces': subscription_calls > 0 and subscription_calls < len(attempts),
+            'interpretation': 'Descriptive only; workload, output lengths and service latency differ. In-progress usage excludes pending calls. Elapsed includes pauses; completed end is latest final-response file mtime. Subscription continuation changes the interface and billing path; a combined throughput ratio cannot isolate the effect of scheduling changes.',
         },
     }
 

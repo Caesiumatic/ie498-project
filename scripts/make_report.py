@@ -29,10 +29,24 @@ def read_csv(path):
     except (pd.errors.EmptyDataError,FileNotFoundError):return pd.DataFrame()
 
 
+def interface_description(subscription_calls):
+    if subscription_calls:
+        return ('Recorded inference includes API-key Chat Completions and ChatGPT-subscription Responses. '
+                'The switch preserves GPT-6 Luna, low reasoning, original prompt text and memory logic, '
+                'with independent single-user-message requests, no conversation links and no tools. '
+                'The subscription interface does not support the original output-token caps; interface differences '
+                'and exact wire requests are retained separately. The user authorized continuation without an equivalence experiment.')
+    return ('Recorded inference uses independent Chat Completions requests with no conversation links or tools. '
+            'The official ChatGPT-subscription Responses adapter is prepared, but no subscription inference is recorded yet. '
+            'Its use requires valid authorization for this application; preparing the adapter does not establish that experiments resumed.')
+
+
 def main():
     store=Store(ROOT/'data/runs/live',readonly=True)
     out=ROOT/'reports/live';analyze(store,out)
     runs=read_csv(out/'runs.csv');costs=read_csv(out/'resources.csv');conditions=read_csv(out/'conditions.csv')
+    subscription_calls=int(costs.subscription_calls.sum())
+    interface_note=interface_description(subscription_calls)
     merged=runs.merge(costs[['run','cost_usd','calls']],left_on='id',right_on='run',how='left')
     primary=merged[merged.eligible_primary]
     reference=merged[merged.eligible_reference]
@@ -47,14 +61,14 @@ def main():
               + ('The planned formation sample is complete.' if len(primary)==planned_primary and len(reference)==planned_reference else 'The extension is not yet complete; the tables below are interim summaries of completed runs.')) if extension else 'No extension freeze is available; only the recorded completed sample is reported.'
     pause_note=''
     if (ROOT/'data/manifests/extension-billing-pause.json').exists() and ((merged.stage.isin(['formation','formation_reference'])) & (merged.status=='paused_access')).any():
-        pause_note='The extension is paused because the provider returned credit_balance_exhausted / insufficient_quota. Account funding is required before resuming the saved checkpoints. Partial runs are excluded from endpoint summaries; see data/manifests/extension-billing-pause.json.'
+        pause_note='The saved billing-pause manifest records an earlier credit_balance_exhausted / insufficient_quota failure. Some extension runs remain paused for access; their current reasons are in live/runs.csv. Checkpoint continuation can use the authorized subscription interface once application sign-in is available. Partial runs are excluded from endpoint summaries; see data/manifests/extension-billing-pause.json for the historical stop.'
     audit_path=ROOT/'reports/data_audit.json'
     audit=json.loads(audit_path.read_text()) if audit_path.exists() else {}
     audit_counts=audit.get('counts',{})
     audit_scope=(f"The saved audit records passed={audit.get('passed')} for {audit_counts.get('rounds','unknown')} rounds and {audit_counts.get('attempts','unknown')} attempts. This receipt certifies its recorded snapshot, not data added afterward." if audit else 'No saved full-data audit receipt is available.')
     pilots=merged[merged.stage=='pilot']
     spending=store.spending()
-    allowance='The user removed the spending cap; actual costs and in-flight reservations remain recorded. ' if spending['budget'] is None else f"Remaining budget headroom is ${spending['budget']-spending['spent']:.6f} (not an account balance). "
+    allowance='The user removed the spending cap; API cash-ledger estimates and in-flight reservations remain recorded. ' if spending['budget'] is None else f"Remaining API cash-ledger budget headroom is ${spending['budget']-spending['spent']:.6f} (not an account balance). "
     attempts=store.rows("SELECT status,COUNT(*) n,SUM(cost) cost FROM api_attempts GROUP BY status")
     uncertain=sum(r['cost'] for r in attempts if r['status']=='uncertain')
     successes=int(primary.effective_success.sum()) if len(primary) else 0
@@ -65,7 +79,7 @@ def main():
 
 This project studies visible market-history windows H∈{{0,1,5,20,100}} and clear, full, and compressed strategic memory in a repeated Bertrand duopoly with logit demand. All live sellers and compressors use the user-selected GPT‑6 Luna with low reasoning. The independent unit in the main experiment is a complete 300-round duopoly run.
 
-There are **{len(primary)} completed formal bullet-memory formation runs**, of which **{successes}** meet the predefined effective supracompetitive criterion, and **{len(reference)} completed formal paper-reference runs**, of which **{reference_successes}** meet the same criterion. The two architectures are summarized separately; their success counts are not pooled. There are {sum(pilots.status=='completed')} complete pilots; interrupted and failed pilots remain separately recorded. The cost ledger totals **${spending['spent']:.6f}**, including **${uncertain:.6f}** in conservative charges for requests with unknown processing status. The budget is {budget_label(spending)}. Conclusions below use saved data only.
+There are **{len(primary)} completed formal bullet-memory formation runs**, of which **{successes}** meet the predefined effective supracompetitive criterion, and **{len(reference)} completed formal paper-reference runs**, of which **{reference_successes}** meet the same criterion. The two architectures are summarized separately; their success counts are not pooled. There are {sum(pilots.status=='completed')} complete pilots; interrupted and failed pilots remain separately recorded. The API cash ledger totals **${spending['spent']:.6f}**, including **${uncertain:.6f}** in conservative estimates for API-key requests with unknown processing status. This is not an invoice or a valuation of subscription usage. The budget is {budget_label(spending)}. Conclusions below use saved data only.
 
 {progress}
 
@@ -91,7 +105,9 @@ Demand per round is `qᵢ = 100 exp((2−pᵢ)/0.25) / [1 + exp((2−p₁)/0.25)
 
 Sellers see only cost, the textual $4.51 ceiling, permitted feedback from the most recent H rounds, and their own memory. They do not see the demand formula, experimental condition, success thresholds, or remaining horizon. H=0 provides no market feedback; full/compressed then accumulate self-generated strategies rather than environmental observations. Both inputs are fixed before either response arrives. A round's bullet can reference outcomes only through the previous round. Executed-price shocks apply after both submissions.
 
-Independent Chat Completions requests carry no conversation links and provide no tools. SQLite transactions ensure one settlement per round, with one immutable memory append per bullet-memory seller; paper-reference state is replaced by the latest PLANS/INSIGHTS output while original responses remain archived. Valid responses are cached by logical call solely for recovery of that call; new rounds are sampled again even with identical prompts. Costs are reserved before calls, retries are bounded, and every attempt retains its raw request, response, and cost. Validation covers mock end-to-end execution, recovery after partial responses, budgeting, branching, and backup restoration. {audit_scope} See [data_audit.json](data_audit.json) for audit scope and `reports/restore_verification.json` in the full archive for snapshot restoration verification. Test counts are recorded in the decision/status logs rather than asserted by this report generator. Current retry counts and failures are in `live/resources.csv` and `live/runs.csv`; all attempts, including truncated outputs, are retained.
+{interface_note}
+
+SQLite transactions ensure one settlement per round, with one immutable memory append per bullet-memory seller; paper-reference state is replaced by the latest PLANS/INSIGHTS output while original responses remain archived. Valid responses are cached by logical call solely for recovery of that call; new rounds are sampled again even with identical prompts. API-key costs are reserved before calls, retries are bounded, and every attempt retains its request, available response and usage, and billing path. Validation covers mock end-to-end execution, recovery after partial responses, budgeting, branching, and backup restoration. {audit_scope} See [data_audit.json](data_audit.json) for audit scope and `reports/restore_verification.json` in the full archive for snapshot restoration verification. Test counts are recorded in the decision/status logs rather than asserted by this report generator. Current retry counts and failures are in `live/resources.csv` and `live/runs.csv`; all attempts, including truncated outputs, are retained.
 
 The v1.0 pilots produced some outputs exceeding 60 words or containing multiple sentences; failed samples were not cleaned into successes. Before the formal stage, v1.1 added structured sentence/word-count constraints and restarted independent pilots. Original outputs and initial prompts remain preserved. See docs/decisions.md.
 
@@ -167,9 +183,15 @@ Each complete run is one independent observation; neither the two firms nor the 
             ip=json.loads(intervention_plan.read_text());n_eligible=sum(r['eligible'] for r in ip['candidates'])
             text+=f'The saved intervention freeze covered {len(ip["candidates"])} parents; {n_eligible} were eligible and {sum(r["selected"] for r in ip["candidates"])} were selected under the budget plan. There are no completed branches to report. Screening and budget reasons are saved in configs/interventions-freeze.json. This saved freeze may precede newly added parents; compare its candidate IDs with current parent_eligibility.csv before interpreting it as screening of the expanded sample.\n'
         else:text+='No completed, pairable maintenance/shock data are available. See the final status record for reasons these experiments were not executed.\n'
-    text+='\n## Resources and recorded costs\n\n'
-    bystage=costs.groupby('stage',as_index=False)[['calls','input_tokens','cached_input_tokens','output_tokens','reasoning_tokens','cost_usd']].sum()
+    text+='\n## Resources and API cash ledger\n\n'
+    text+='The retained cost_usd column equals api_cash_ledger_usd for backward compatibility. It excludes a monetary valuation of subscription usage. Token totals combine reported usage from both interfaces; subscription columns identify its contribution. Missing response usage is counted separately rather than estimated.\n\n'
+    bystage=costs.groupby('stage',as_index=False)[['calls','input_tokens','cached_input_tokens','output_tokens','reasoning_tokens','api_cash_ledger_usd']].sum()
     text+=table(bystage,list(bystage.columns))
+    if subscription_calls:
+        substage=costs.groupby('stage',as_index=False)[['subscription_calls','subscription_input_tokens','subscription_output_tokens','subscription_reasoning_tokens','subscription_calls_without_usage']].sum()
+        text+='\nSubscription attempts and observed tokens, included in the total resource counts above:\n\n'
+        text+=table(substage,list(substage.columns))
+        text+='\nBilling paths differ within the continued runs. Dollar averages below are descriptive API cash-ledger amounts and do not establish comparative memory efficiency or total experiment cost.\n'
     if len(primary):
         bymode=costs.merge(primary[['id','mode']],left_on='run',right_on='id').groupby('mode',as_index=False)[['calls','cost_usd','compressor_input_tokens','final_archive_bytes','max_visible_memory_words']].mean()
         text+='\nMean resources per formal run, grouped by memory mode across all H values:\n\n'
@@ -179,9 +201,9 @@ Each complete run is one independent observation; neither the two firms nor the 
         columns=['calls','cost_usd','input_tokens','output_tokens','max_visible_memory_words']
         text+='\nMean resources per completed formal paper-reference run (separate from bullet modes):\n\n'
         text+=table(ref_resources[columns].mean().to_frame().T,columns)
-    text+=f'''\nThe total ledger is ${spending['spent']:.6f}. {allowance}Attempts with unknown server-processing status are charged at the reserved upper bound; these estimates are not invoices. Reasoning tokens are already included in output tokens and are not charged twice.
+    text+=f'''\nThe API cash ledger is ${spending['spent']:.6f}. {allowance}API-key attempts with unknown server-processing status are recorded at the reserved upper bound; these estimates are not invoices. Subscription attempts have zero API cash charge in this ledger, while their observed tokens remain recorded. The ledger does not measure remaining subscription allowance or allocate the subscription fee. Reasoning tokens are already included in output tokens and are not counted twice.
 
-Compression reduces seller-visible memory but retains the complete original archive and pays to reread it every round. Conclusions therefore concern decision-context compression, not a system that needs only one sentence of memory. History/memory/archive components are recorded as conservative UTF‑8 byte bounds, while API tokens use actual usage. The tokenizer endpoint was inaccessible in this environment, so no fabricated exact token counts are reported.
+Compression reduces seller-visible memory but retains the complete original archive and processes it again every round. Conclusions therefore concern decision-context compression, not a system that needs only one sentence of memory. History/memory/archive components are recorded as conservative UTF‑8 byte bounds, while model tokens use reported usage. The tokenizer endpoint was inaccessible in this environment, so no fabricated exact token counts are reported.
 
 ## Game theory and AI interpretation
 

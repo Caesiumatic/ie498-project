@@ -80,8 +80,14 @@ def cost_from_usage(usage, prices):
 
 
 class Caller:
-    def __init__(self, store, concurrency=16):
+    def __init__(self, store, concurrency=16, *, transport="openai_chat_completions", subscription_auth=None):
+        if transport not in ("openai_chat_completions", "chatgpt_subscription_responses"):
+            raise ValueError("Unknown inference transport")
+        if transport == "chatgpt_subscription_responses" and subscription_auth is None:
+            raise ValueError("ChatGPT subscription authorization is required")
         self.store = store
+        self.transport = transport
+        self.subscription_auth = subscription_auth
         self.sem = asyncio.Semaphore(concurrency)
         # Retain one connection per permitted in-flight call, avoiding the default
         # 20-idle-connection cap when the coordinator runs more independent runs.
@@ -94,8 +100,10 @@ class Caller:
         await self.client.aclose()
 
     def accept_raw(self, row, raw, config):
-        usage = raw.get("usage", {})
-        cost = 0 if config["provider"] == "mock" else (cost_from_usage(usage, config["prices"]) if usage else row['reserved'])
+        from . import subscription_transport as subscription
+        is_subscription = raw.get("transport") == subscription.TRANSPORT
+        usage = subscription.normalized_usage(raw) if is_subscription else raw.get("usage", {})
+        cost = 0 if is_subscription or config["provider"] == "mock" else (cost_from_usage(usage, config["prices"]) if usage else row['reserved'])
         path = f"raw/{row['id']}.json"
         if "error" in raw:
             status_code = raw.get("http_status", 0)
@@ -105,9 +113,13 @@ class Caller:
                                       usage, raw_path=path, error=json.dumps(raw["error"])[:1000])
             return None
         try:
-            if raw["choices"][0].get("finish_reason") != "stop":
-                raise ValueError("Model output was truncated or refused")
-            parsed = parse_output(raw["choices"][0]["message"]["content"], row["purpose"], config["architecture"])
+            if is_subscription:
+                text = subscription.extract_text(raw, config["model"])
+            else:
+                if raw["choices"][0].get("finish_reason") != "stop":
+                    raise ValueError("Model output was truncated or refused")
+                text = raw["choices"][0]["message"]["content"]
+            parsed = parse_output(text, row["purpose"], config["architecture"])
         except (ValueError, KeyError, TypeError) as exc:
             self.store.finish_attempt(row["id"], "invalid", cost, usage, raw_path=path, error=str(exc))
             return None
@@ -123,7 +135,11 @@ class Caller:
                 self.store.finish_attempt(row["id"], "uncertain", row["reserved"], error="Interrupted before response persisted")
 
     async def call(self, run, t, agent, purpose, prompt, config):
+        from . import subscription_transport as subscription
         call_id = f"{run}:{t}:{agent}:{purpose}"
+        # This canonical scientific request remains identical across transports,
+        # allowing accepted calls in partially completed rounds to be reused.
+        # Subscription requests additionally persist the exact HTTP body below.
         body = request_body(config, prompt, purpose)
         req_hash = digest(body)
         cached = self.store.accepted(call_id, req_hash)
@@ -140,7 +156,9 @@ class Caller:
             byte_bound=len(json.dumps(body).encode())+4096
             reserve = (byte_bound*max(config["prices"]["input"],config['prices'].get('cache_write',0))*(2 if byte_bound>272000 else 1) +
                        body["max_completion_tokens"]*config["prices"]["output"]*(1.5 if byte_bound>272000 else 1)) / 1e6
-            if config["provider"] == "mock":
+            is_subscription = self.transport == subscription.TRANSPORT and config["provider"] != "mock"
+            wire_body = subscription.subscription_request(body) if is_subscription else body
+            if config["provider"] == "mock" or is_subscription:
                 reserve = 0
             row = dict(id=attempt_id, call_id=call_id, attempt=number, run_id=run,t=t,agent=agent,purpose=purpose,
                        request_hash=req_hash,request_json=json.dumps(body),reserved=reserve)
@@ -160,10 +178,32 @@ class Caller:
                     await self.limiter.acquire(rate_estimate)
                 if self.not_before>time.monotonic():
                     await asyncio.sleep(self.not_before-time.monotonic())
+                if is_subscription:
+                    try:
+                        access_token = await self.subscription_auth.access_token()
+                    except Exception as exc:
+                        # Authentication never falls back to the API key or consumes
+                        # a scientific attempt. Do not expose credential error bodies.
+                        raise PermanentAPIError("ChatGPT subscription authorization unavailable; complete official sign-in") from exc
                 self.store.reserve(row)
                 atomic_json(self.store.root / f"requests/{attempt_id}.json", body)
                 if config["provider"] == "mock":
                     raw = self.mock(call_id, body, config, purpose)
+                elif is_subscription:
+                    atomic_json(self.store.root / f"wire_requests/{attempt_id}.json", wire_body)
+                    raw = await subscription.send(self.client, wire_body, access_token)
+                    if raw.get('http_status') == 429 and not subscription.permanent_error(raw):
+                        try:delay=float(raw.get('retry_after','60'))
+                        except (TypeError,ValueError):delay=60
+                        self.not_before=max(self.not_before,time.monotonic()+max(1,delay))
+                    raw["transport_provenance"] = {
+                        "canonical_request_sha256": req_hash,
+                        "wire_request_sha256": digest(wire_body),
+                        "wire_request_path": f"wire_requests/{attempt_id}.json",
+                        "endpoint": "https://api.openai.com/v1/responses",
+                        "billing_path": "chatgpt_subscription",
+                        "interface_changes": subscription.transport_metadata(body),
+                    }
                 else:
                     key = os.environ.get("OPENAI_API_KEY")
                     if not key:
@@ -189,6 +229,10 @@ class Caller:
                 result = self.accept_raw(row, raw, config)
             if result is not None:
                 return result
+            if is_subscription and subscription.permanent_error(raw):
+                error = raw.get("error") or {}
+                code = error.get("code", "request rejected") if isinstance(error, dict) else "request rejected"
+                raise PermanentAPIError(f"ChatGPT subscription request failed: {code}")
             error = raw.get("error") if isinstance(raw.get("error"), dict) else {}
             code = error.get("code")
             if raw.get("http_status") in (400,401,403,404) or error.get("type")=="insufficient_quota" or code in ("insufficient_quota", "billing_hard_limit_reached", "credit_balance_exhausted"):

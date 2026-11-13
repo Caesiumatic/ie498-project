@@ -10,7 +10,9 @@
     "accepted_attempts": 57563,
     "verified_seller_inputs": 44768,
     "verified_compressor_inputs": 12078,
-    "reparsed_current_outputs": 56873
+    "reparsed_current_outputs": 56873,
+    "verified_subscription_requests": 0,
+    "accepted_subscription_attempts": 0
   },
   "spending": {
     "spent": 42.15208822,
@@ -30,6 +32,8 @@
     "accepted response provenance",
     "reparse current-protocol raw outputs",
     "raw/request checksums",
+    "subscription wire request and usage provenance",
+    "subscription requests excluded from API cash ledger",
     "usage-cost reconciliation",
     "budget"
   ]
