@@ -1,6 +1,6 @@
 {
   "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
-  "code_commit": "763de9d801d83d512e2ffca724f0d4e7c25df568",
+  "code_commit": "b76fd4a43dd3a12efad0858e3bb780fee65d2cdb",
   "candidates": [
     {
       "parent": "formation-r1-h100-full",
@@ -64,6 +64,48 @@
         "effective_success": false
       },
       "selected": false
+    },
+    {
+      "parent": "formation-r4-h100-full",
+      "status": "completed",
+      "eligible": false,
+      "window_metrics": {
+        "n_eval": 50,
+        "price_0": 1.4718,
+        "price_1": 1.473,
+        "profit_0": 22.294333478246337,
+        "profit_1": 22.242778151103344,
+        "joint_profit": 44.537111629349674,
+        "CI": -0.0021045206685923524,
+        "price_std": 0.00759343150026066,
+        "price_gap": 0.0016000000000000014,
+        "price_fraction": 0.0,
+        "price_success": false,
+        "profit_success": false,
+        "effective_success": false
+      },
+      "selected": false
+    },
+    {
+      "parent": "formation-r5-h100-full",
+      "status": "completed",
+      "eligible": false,
+      "window_metrics": {
+        "n_eval": 50,
+        "price_0": 3.94,
+        "price_1": 3.94,
+        "profit_0": 0.1252713891050712,
+        "profit_1": 0.1252713891050712,
+        "joint_profit": 0.2505427782101424,
+        "CI": -1.9349388476037883,
+        "price_std": 1.7763568394002505e-15,
+        "price_gap": 0.0,
+        "price_fraction": 1.0,
+        "price_success": true,
+        "profit_success": false,
+        "effective_success": false
+      },
+      "selected": false
     }
   ],
   "runs": [],
@@ -73,8 +115,8 @@
   },
   "reserved_estimate_usd": 0.0,
   "balance_at_plan": {
-    "spent": 30.655608970000003,
-    "reserved": 0.027837124999999997,
+    "spent": 42.15208822,
+    "reserved": 0,
     "budget": null
   },
   "selection_order": "Ascending parent run ID, eligibility then budget only",

@@ -227,8 +227,8 @@
     },
     {
       "id": "formation-r4-h5-compressed",
-      "status": "paused_access",
-      "error": "ChatGPT subscription request failed: subscription_sharing_usage_limit_exceeded"
+      "status": "completed",
+      "error": null
     },
     {
       "id": "formation-r4-h100-clear",
@@ -247,8 +247,8 @@
     },
     {
       "id": "formation-r4-h100-compressed",
-      "status": "paused_access",
-      "error": "ChatGPT subscription request failed: subscription_sharing_usage_limit_exceeded"
+      "status": "completed",
+      "error": null
     },
     {
       "id": "formation-r4-h0-clear",
@@ -302,8 +302,8 @@
     },
     {
       "id": "formation-r5-h100-compressed",
-      "status": "paused_access",
-      "error": "ChatGPT subscription request failed: subscription_sharing_usage_limit_exceeded"
+      "status": "completed",
+      "error": null
     },
     {
       "id": "formation-r5-h0-full",
@@ -401,14 +401,14 @@
       "error": null
     }
   ],
-  "snapshot": "/workspace/ie498/data/backups/batches/20261113T215205939296Z",
+  "snapshot": "/workspace/ie498/data/backups/batches/20261113T231547550042Z",
   "spending": {
     "spent": 42.15208822,
     "reserved": 0,
     "budget": null
   },
-  "code_commit": "a4d7287f2d201b3498fca7e52472cbe1d211ce10",
+  "code_commit": "b76fd4a43dd3a12efad0858e3bb780fee65d2cdb",
   "transport": "chatgpt_subscription_responses",
-  "resume_manifest": "data/manifests/extension-resume-20261113T204501455829Z.json",
-  "all_completed": false
+  "resume_manifest": "data/manifests/extension-resume-20261113T231213451088Z.json",
+  "all_completed": true
 }

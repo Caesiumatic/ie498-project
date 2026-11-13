@@ -1,18 +1,17 @@
 {
-  "observed_at_utc": "2026-11-13T23:11:47.028726+00:00",
-  "all_completed": false,
+  "observed_at_utc": "2026-11-13T23:18:17.927474+00:00",
+  "all_completed": true,
   "extension_runs": 35,
   "by_architecture": {
     "bullet_memory": {
       "runs": 30,
-      "completed": 27,
-      "rounds_done": 8961,
+      "completed": 30,
+      "rounds_done": 9000,
       "rounds_target": 9000,
-      "round_min": 276,
+      "round_min": 300,
       "round_max": 300,
       "statuses": {
-        "paused_access": 3,
-        "completed": 27
+        "completed": 30
       }
     },
     "paper_reference": {
@@ -27,13 +26,9 @@
       }
     }
   },
-  "runs_with_errors": [
-    "formation-r4-h100-compressed",
-    "formation-r4-h5-compressed",
-    "formation-r5-h100-compressed"
-  ],
+  "runs_with_errors": [],
   "attempt_statuses": {
-    "accepted": 26827,
+    "accepted": 26980,
     "invalid": 1,
     "failed": 252
   },
@@ -47,19 +42,19 @@
   "ledger_delta_usd": 9.9530436,
   "selected_run_cost_usd": 9.9530436,
   "ledger_interpretation": "API cash-ledger estimates only; excludes subscription fee or allowance valuation. Subscription attempts add zero API cash charge, not zero computational use.",
-  "subscription_calls": 10317,
+  "subscription_calls": 10470,
   "subscription_calls_without_usage": 167,
   "subscription_token_usage": {
-    "prompt_tokens": 81146028,
-    "completion_tokens": 1207974
+    "prompt_tokens": 83100637,
+    "completion_tokens": 1223126
   },
   "first_request_utc": "2026-11-13T18:09:10.707105+00:00",
-  "elapsed_seconds": 18156.321620941162,
+  "elapsed_seconds": 18396.594422101974,
   "token_usage": {
-    "prompt_tokens": 161683594,
-    "completion_tokens": 5006548
+    "prompt_tokens": 163638203,
+    "completion_tokens": 5021700
   },
-  "actual_tokens_per_elapsed_second": 9180.83219057668,
+  "actual_tokens_per_elapsed_second": 9167.995941540636,
   "performance_comparison": {
     "baseline_batch3": {
       "attempts": 11991,
@@ -67,9 +62,9 @@
       "first_to_last_request_start_seconds": 2950.748348236084,
       "actual_tokens_per_second": 25946.98360020037
     },
-    "extension_first_to_last_request_start_seconds": 13373.27887892723,
-    "extension_actual_tokens_per_start_span_second": 12464.418300784844,
-    "ratio_to_baseline": 0.48038024353199155,
+    "extension_first_to_last_request_start_seconds": 18393.629187583923,
+    "extension_actual_tokens_per_start_span_second": 9169.47391294856,
+    "ratio_to_baseline": 0.35339267385507395,
     "mixed_interfaces": true,
     "interpretation": "Descriptive only; workload, output lengths and service latency differ. In-progress usage excludes pending calls. Elapsed includes pauses; completed end is latest final-response file mtime. Subscription continuation changes the interface and billing path; a combined throughput ratio cannot isolate the effect of scheduling changes."
   }

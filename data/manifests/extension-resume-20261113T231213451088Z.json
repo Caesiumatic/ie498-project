@@ -1,0 +1,25 @@
+{
+  "code_commit": "b76fd4a43dd3a12efad0858e3bb780fee65d2cdb",
+  "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
+  "pending_runs": [
+    "formation-r4-h5-compressed",
+    "formation-r4-h100-compressed",
+    "formation-r5-h100-compressed"
+  ],
+  "checkpoints": {
+    "formation-r4-h5-compressed": 295,
+    "formation-r4-h100-compressed": 276,
+    "formation-r5-h100-compressed": 290
+  },
+  "remaining_rounds": 39,
+  "transport": "chatgpt_subscription_responses",
+  "api_ledger": {
+    "spent": 42.15208822,
+    "reserved": 0,
+    "budget": null
+  },
+  "equivalence_experiment": false,
+  "authorization": "User requested same-model continuation via official ChatGPT subscription authorization",
+  "resume_paused": true,
+  "first_run": "formation-r4-h5-compressed"
+}

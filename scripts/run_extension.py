@@ -43,6 +43,8 @@ async def run_pending(store, caller, pending, stop, first_run=None):
         if first_run not in pending:
             raise ValueError('The first run must be an unfinished frozen run')
         await run_one(store,caller,first_run,stop)
+        if stop.is_set() or store.rows('SELECT status FROM runs WHERE id=?',(first_run,))[0]['status']!='completed':
+            return
     if not stop.is_set():
         await asyncio.gather(*(run_one(store,caller,run,stop) for run in pending if run!=first_run))
 

@@ -1,5 +1,6 @@
 import importlib.util
 import asyncio
+from types import SimpleNamespace
 from pathlib import Path
 import pytest
 from ie498.cli import load_config
@@ -51,7 +52,18 @@ def test_first_run_success_continues_each_remaining_run_once(monkeypatch):
         calls.append(run)
     monkeypatch.setattr(module,'run_one',complete)
     pending=['last_slot','two_slots','another']
-    asyncio.run(module.run_pending(None,None,pending,asyncio.Event(),'two_slots'))
+    store=SimpleNamespace(rows=lambda *args:[{'status':'completed'}])
+    asyncio.run(module.run_pending(store,None,pending,asyncio.Event(),'two_slots'))
     assert calls[0]=='two_slots'
     assert sorted(calls)==sorted(pending)
     assert pending==['last_slot','two_slots','another']
+
+
+def test_first_run_nonaccess_pause_also_leaves_other_runs_untouched(monkeypatch):
+    calls=[]
+    async def paused(store,caller,run,stop):
+        calls.append(run)
+    monkeypatch.setattr(module,'run_one',paused)
+    store=SimpleNamespace(rows=lambda *args:[{'status':'paused_error'}])
+    asyncio.run(module.run_pending(store,None,['first','other'],asyncio.Event(),'first'))
+    assert calls==['first']
