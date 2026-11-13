@@ -1,12 +1,13 @@
 # 当前阶段
 
 - 代码、协议、恢复、分析与备份流程完成；20项关键测试通过。
-- 原始mock：16个配置各8轮，快照恢复验证通过。
-- v1.0 pilot：格式筛选后停止，数据与失败全部保留。
-- v1.1 full-1：300轮完成，final50 CI≈0.996，有效成功。
-- v1.1 clear、compressed、paper：继续运行；两个可选full pilot因预算优先级停止，未作为完成样本。
+- Mock单独保存；v1.0 pilot的格式失败与所有中断记录保留。
+- v1.1有4个完整300轮pilot：paper_reference、H100/full、H100/clear、H100/compressed；两个可选full pilot因预算优先级停止。
 - 所有真实卖家与压缩器均为GPT‑6 Luna low。
-- Formation：等待完整clear/compressed成本；用scripts/freeze_plan.py按成本冻结均衡重复数，再运行scripts/run_formation.py。
-- 主矩阵优先；maintenance/shock只对合格parent用剩余预算执行。
+- 第一批formation全部15个条件×300轮完成，成本$8.5988149。
+- 用户授权预算$25；在读取第一批行为结果前按D18成本规则最终冻结每格2次，原目标3次所需预算不满足。
+- 第二批正在运行；完整主实验目标为30个run、9000轮。
+- 第一批3/15个条件有效成功，属于单次重复的初步结果，报告将在第二批完成后重算。
+- 主矩阵优先；maintenance/shock仅对151–200轮满足标准的正式H100/full parent按余额执行。
 
 实时状态以SQLite与CLI status为准。密钥不进入Git、报告或交付包。

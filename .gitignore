@@ -18,3 +18,4 @@ reports/live/rounds.csv
 reports/live/memory_audit.csv
 reports/progress/
 reports/delivery_manifest.json
+reports/*.log
