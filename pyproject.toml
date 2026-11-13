@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[project]
+name = "ie498-memory-pricing"
+version = "0.1.0"
+description = "Reproducible memory experiments in repeated duopoly pricing"
+requires-python = ">=3.12"
+dependencies = ["numpy>=2.0", "scipy>=1.14", "pandas>=2.2", "matplotlib>=3.9", "httpx>=0.28", "tiktoken>=0.9"]
+[project.optional-dependencies]
+dev = ["pytest>=8.3"]
+[project.scripts]
+ie498 = "ie498.cli:main"
+[tool.hatch.build.targets.wheel]
+packages = ["src/ie498"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]

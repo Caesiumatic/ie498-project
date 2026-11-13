@@ -1,0 +1,38 @@
+[
+  {
+    "file": "paper-v6.pdf",
+    "source_url": "https://arxiv.org/pdf/2404.00806v6",
+    "retrieved_date": "2026-11-12 America/Chicago",
+    "sha256": "ca3b9ca28ccaa40e550d848cfe4d641a470b073b22adc34c584f9b19a6228482"
+  },
+  {
+    "file": "model-6luna.html",
+    "source_url": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+    "retrieved_date": "2026-11-12 America/Chicago",
+    "sha256": "80eaf9da5b779420e9e49d42ed51237dda2a701e17a0b9bf4996e462fe5770cf"
+  },
+  {
+    "file": "conversation-state.html",
+    "source_url": "https://developers.openai.com/api/docs/guides/conversation-state",
+    "retrieved_date": "2026-11-12 America/Chicago",
+    "sha256": "2cb83dc294a8e7e6948f755c96b2695bfe9d4845650c5d069ce3169934c234ca"
+  },
+  {
+    "file": "latest-model.html",
+    "source_url": "https://developers.openai.com/api/docs/guides/latest-model",
+    "retrieved_date": "2026-11-12 America/Chicago",
+    "sha256": "f50f3306174338623b5c9f6d28d46f1fccf87d35cbcdffd2888a3a329153d01e"
+  },
+  {
+    "file": "chat-api.html",
+    "source_url": "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create",
+    "retrieved_date": "2026-11-12 America/Chicago",
+    "sha256": "0b32415f11e3f128e425867136f3a4d233d95307597b031ddc65e31d5125c790"
+  },
+  {
+    "file": "pricing.html",
+    "source_url": "https://developers.openai.com/api/docs/pricing",
+    "retrieved_date": "2026-11-12 America/Chicago",
+    "sha256": "b2a55d2aff6dbb913b9142e0b8c4864c14ae94a4222a86d5e73364aa4b2012c5"
+  }
+]
