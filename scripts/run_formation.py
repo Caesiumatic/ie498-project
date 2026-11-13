@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import argparse
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
 from ie498.agents import Caller
@@ -14,7 +15,7 @@ from ie498.runner import create_run,coordinator_lock,run_one,git_commit,same_con
 from ie498.storage import Store,atomic_json
 
 
-async def execute(store,freeze):
+async def execute(store,freeze,stop_after=None):
     config=load_config()
     if config!=freeze['config'] or prompt_hash()!=freeze['prompt_hash']:
         raise ValueError('Frozen configuration or prompts changed')
@@ -56,6 +57,7 @@ async def execute(store,freeze):
             atomic_json(ROOT/f'data/manifests/batch-{rep}-results.json',{'runs':batch_rows,'cost_usd':cost,'snapshot':str(path),'code_commit':git_commit()})
             print(json.dumps({'event':'batch_complete','batch':rep,'cost':cost,'statuses':batch_rows}),flush=True)
             if any(r['status']!='completed' for r in batch_rows):break
+            if stop_after is not None and rep>=stop_after:break
         await paper_task
     finally:
         if not paper_task.done():
@@ -65,7 +67,8 @@ async def execute(store,freeze):
 
 
 if __name__=='__main__':
+    parser=argparse.ArgumentParser();parser.add_argument('--stop-after-batch',type=int);args=parser.parse_args()
     load_env();freeze=json.loads((ROOT/'configs/formation-freeze.json').read_text())
     store=Store(ROOT/'data/runs/live')
-    with coordinator_lock(store):asyncio.run(execute(store,freeze))
+    with coordinator_lock(store):asyncio.run(execute(store,freeze,args.stop_after_batch))
     store.close()

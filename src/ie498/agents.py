@@ -141,9 +141,20 @@ class Caller:
                 reserve = 0
             row = dict(id=attempt_id, call_id=call_id, attempt=number, run_id=run,t=t,agent=agent,purpose=purpose,
                        request_hash=req_hash,request_json=json.dumps(body),reserved=reserve)
+            prior=self.store.rows("SELECT request_json,usage FROM api_attempts WHERE run_id=? AND agent=? AND purpose=? AND status='accepted' ORDER BY t DESC LIMIT 1",(run,agent,purpose))
+            rate_estimate=len(json.dumps(body).encode())*.35+body['max_completion_tokens']
+            if prior:
+                previous=json.loads(prior[0]['usage'] or '{}').get('prompt_tokens')
+                if previous is not None:
+                    # New bytes are conservatively one token each; unchanged content
+                    # uses observed usage. This only paces requests, never bills them.
+                    growth=max(0,len(row['request_json'].encode())-len(prior[0]['request_json'].encode()))
+                    observed_output=json.loads(prior[0]['usage']).get('completion_tokens',256)
+                    output_allowance=min(body['max_completion_tokens'],max(256,1.5*observed_output))
+                    rate_estimate=previous+growth+256+output_allowance
             async with self.sem:
                 if config['provider']=='openai':
-                    await self.limiter.acquire(len(json.dumps(body).encode())*.35+body['max_completion_tokens'])
+                    await self.limiter.acquire(rate_estimate)
                 if self.not_before>time.monotonic():
                     await asyncio.sleep(self.not_before-time.monotonic())
                 self.store.reserve(row)

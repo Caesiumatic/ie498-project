@@ -57,6 +57,9 @@ class Store:
         CREATE TABLE IF NOT EXISTS interventions(
           run_id TEXT REFERENCES runs(id), t INTEGER, agent INTEGER, factor REAL,
           PRIMARY KEY(run_id,t,agent));
+        CREATE TABLE IF NOT EXISTS execution_epochs(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,run_id TEXT REFERENCES runs(id),
+          checkpoint INTEGER NOT NULL,commit_hash TEXT NOT NULL,prompt_hash TEXT NOT NULL,started REAL NOT NULL);
         ''')
         self.db.execute("INSERT OR IGNORE INTO settings VALUES('budget',?)", (str(budget),))
         self.db.commit()
@@ -70,6 +73,11 @@ class Store:
     def status(self, run, status, error=None):
         with self.db:
             self.db.execute("UPDATE runs SET status=?,error=? WHERE id=?", (status, error, run))
+
+    def epoch(self,run,checkpoint,commit,prompts):
+        with self.db:
+            self.db.execute('INSERT INTO execution_epochs(run_id,checkpoint,commit_hash,prompt_hash,started) VALUES(?,?,?,?,?)',
+                            (run,checkpoint,commit,prompts,time.time()))
 
     def spending(self):
         row = self.rows("SELECT COALESCE(SUM(cost),0) spent, COALESCE(SUM(CASE WHEN status='pending' THEN reserved ELSE 0 END),0) reserved FROM api_attempts")[0]

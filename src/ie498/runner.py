@@ -50,6 +50,7 @@ async def run_one(store, caller, run, stop_event):
     store.status(run,"running")
     try:
         history = store.history(run)
+        if len(history)<c['T']:store.epoch(run,len(history),git_commit(),metadata['prompt_hash'])
         for t in range(len(history)+1, c["T"]+1):
             if (store.root/f'{run}.pause').exists():
                 store.status(run,'paused_manual','Pause marker found; round boundary preserved')

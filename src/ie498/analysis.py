@@ -46,12 +46,15 @@ def bootstrap(values,seed=498):
 def analyze(store,destination):
     out=Path(destination);out.mkdir(parents=True,exist_ok=True)
     runs=store.rows('SELECT * FROM runs ORDER BY id')
+    has_epochs=bool(store.rows("SELECT name FROM sqlite_master WHERE type='table' AND name='execution_epochs'"))
     summary=[];long=[];resources=[];sensitivity=[];memory_audit=[]
     bench=Market().benchmarks();atomic_json(out/'benchmarks.json',bench)
     for run in runs:
         c=json.loads(run['config']);history=store.history(run['id'])
         owned=[r for r in history if r['t']>run['checkpoint']]
         row={k:run[k] for k in ('id','status','error','parent','checkpoint','commit_hash','prompt_hash')}
+        epochs=store.rows('SELECT DISTINCT commit_hash FROM execution_epochs WHERE run_id=?',(run['id'],)) if has_epochs else []
+        row['execution_commits']=';'.join(sorted({run['commit_hash']}|{e['commit_hash'] for e in epochs}))
         row.update({k:c[k] for k in ('stage','provider','model','architecture','H','mode','T')})
         row['rounds_completed']=len(history);row['new_rounds']=len(owned)
         row.update(metrics(owned,c['evaluation_window'],c['epsilon_price'],c['ci_threshold'],c['price_fraction']))
