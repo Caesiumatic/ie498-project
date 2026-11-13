@@ -179,6 +179,14 @@ def interpretation(bullet, reference, precision):
         'original repeats or matched random seeds. Execution-time/model-service differences '
         'and post-result design changes limit causal and confirmatory interpretations. '
         'No post hoc significance test is used to decide whether to stop or favor a condition.', '',
+        'The added bullet repeats and all five formal paper-reference trajectories switched '
+        'from API-key Chat Completions to ChatGPT-subscription Responses at saved checkpoints. '
+        'The model, low reasoning level, original user prompt text, and memory rules were retained; '
+        'the subscription route omits the original output-token caps and transport-specific controls. '
+        'No interface-equivalence experiment was performed. Cohort and architectural differences '
+        'therefore cannot be attributed solely to repeat randomness or memory representation; '
+        'the interface change is an additional limitation. Exact switch checkpoints and wire '
+        'requests are retained in the resume manifests and raw data.', '',
         '![H100 reference comparison](live/reference_comparison.png)', '',
         '![Success-rate interval comparison](live/extension_precision.png)', '',
         'See `live/extension_precision.csv` for every condition and cohort, including '

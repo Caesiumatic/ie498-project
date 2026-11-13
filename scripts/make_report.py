@@ -221,6 +221,7 @@ See README for commands, recovery steps, and data structure. Recompute the analy
 
 ```bash
 uv run ie498 --data data/runs/live analyze --out reports/live
+uv run python scripts/compare_extension.py  # Requires all 75 + 5 formal runs complete
 uv run python scripts/make_report.py
 ```
 
