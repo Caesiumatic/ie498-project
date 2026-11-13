@@ -1,0 +1,365 @@
+{
+  "protocol_version": "1.1",
+  "config": {
+    "protocol_version": "1.1",
+    "architecture": "bullet_memory",
+    "provider": "openai",
+    "model": "gpt-6-luna",
+    "stage": "planned",
+    "H": 100,
+    "mode": "full",
+    "T": 300,
+    "temperature": null,
+    "max_attempts": 3,
+    "context_limit": 1050000,
+    "evaluation_window": 50,
+    "budget_usd": 25.0,
+    "prices": {
+      "input": 0.1,
+      "cached_input": 0.01,
+      "cache_write": 0.125,
+      "output": 0.5
+    },
+    "pricing_version": "openai-gpt-6-luna-standard-2026-11-12",
+    "model_verified": true,
+    "local_seed": 498,
+    "analysis_seed": 498,
+    "provider_seed": null,
+    "epsilon_price": 0.02,
+    "price_fraction": 0.8,
+    "ci_threshold": 0.5,
+    "reasoning_effort": "low",
+    "output_limit": 2048,
+    "paper_output_limit": 4096,
+    "cache_mode": "off",
+    "transport_version": "stateless-single-message-no-cache-write-v1"
+  },
+  "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
+  "repeats": 2,
+  "desired_repeats": 3,
+  "estimated_batch_cost_usd": 9.470587685502899,
+  "batch_cost_safety_factor": 1.04,
+  "paper_cost_per_remaining_round": 0.003,
+  "budget_at_freeze": {
+    "spent": 4.82975667,
+    "reserved": 0,
+    "budget": 15.0
+  },
+  "pilot_sources": {
+    "clear": "pilot-v11-clear",
+    "full": "pilot-v11-full-1",
+    "compressed": "pilot-v11-compressed"
+  },
+  "history_tokens_per_byte_projection": 0.39027563216521666,
+  "projection_method": "Accepted pilot usage, uncached standard rates; shorter H removes history input estimated from minimum observed clear-pilot token/byte ratio; H100 memory/output lengths held fixed for all H; 4% batch margin plus separate paper reserve and $0.10 buffer.",
+  "cells": [
+    {
+      "H": 0,
+      "mode": "clear",
+      "projected_input_tokens": 258226.6525733801,
+      "projected_output_tokens": 199643.0,
+      "projected_cost_usd": 0.12564416525733801
+    },
+    {
+      "H": 1,
+      "mode": "clear",
+      "projected_input_tokens": 286373.7214407689,
+      "projected_output_tokens": 199643.0,
+      "projected_cost_usd": 0.1284588721440769
+    },
+    {
+      "H": 5,
+      "mode": "clear",
+      "projected_input_tokens": 398935.45816733054,
+      "projected_output_tokens": 199643.0,
+      "projected_cost_usd": 0.13971504581673305
+    },
+    {
+      "H": 20,
+      "mode": "clear",
+      "projected_input_tokens": 807360.8586063876,
+      "projected_output_tokens": 199643.0,
+      "projected_cost_usd": 0.18055758586063878
+    },
+    {
+      "H": 100,
+      "mode": "clear",
+      "projected_input_tokens": 2620800.0,
+      "projected_output_tokens": 199643.0,
+      "projected_cost_usd": 0.3619015
+    },
+    {
+      "H": 0,
+      "mode": "full",
+      "projected_input_tokens": 6900540.896251729,
+      "projected_output_tokens": 148254.0,
+      "projected_cost_usd": 0.764181089625173
+    },
+    {
+      "H": 1,
+      "mode": "full",
+      "projected_input_tokens": 6928726.992682371,
+      "projected_output_tokens": 148254.0,
+      "projected_cost_usd": 0.7669996992682372
+    },
+    {
+      "H": 5,
+      "mode": "full",
+      "projected_input_tokens": 7041444.83966174,
+      "projected_output_tokens": 148254.0,
+      "projected_cost_usd": 0.7782714839661741
+    },
+    {
+      "H": 20,
+      "mode": "full",
+      "projected_input_tokens": 7450455.653549097,
+      "projected_output_tokens": 148254.0,
+      "projected_cost_usd": 0.8191725653549098
+    },
+    {
+      "H": 100,
+      "mode": "full",
+      "projected_input_tokens": 9267017.0,
+      "projected_output_tokens": 148254.0,
+      "projected_cost_usd": 1.0008287
+    },
+    {
+      "H": 0,
+      "mode": "compressed",
+      "projected_input_tokens": 7201908.099032486,
+      "projected_output_tokens": 199152.0,
+      "projected_cost_usd": 0.8197668099032487
+    },
+    {
+      "H": 1,
+      "mode": "compressed",
+      "projected_input_tokens": 7229829.9788600635,
+      "projected_output_tokens": 199152.0,
+      "projected_cost_usd": 0.8225589978860064
+    },
+    {
+      "H": 5,
+      "mode": "compressed",
+      "projected_input_tokens": 7341506.570452906,
+      "projected_output_tokens": 199152.0,
+      "projected_cost_usd": 0.8337266570452907
+    },
+    {
+      "H": 20,
+      "mode": "compressed",
+      "projected_input_tokens": 7746835.133750729,
+      "projected_output_tokens": 199152.0,
+      "projected_cost_usd": 0.874259513375073
+    },
+    {
+      "H": 100,
+      "mode": "compressed",
+      "projected_input_tokens": 9549690.0,
+      "projected_output_tokens": 199152.0,
+      "projected_cost_usd": 1.054545
+    }
+  ],
+  "sampling_decision_uses_behavior": false,
+  "budget_amendment": {
+    "reason": "User raised total budget to USD 25 before completion of the first formation batch",
+    "prior_budget": 15,
+    "new_budget": 25,
+    "prior_repeats": 1,
+    "new_repeats": 2,
+    "balance_at_amendment": {
+      "spent": 5.497420695,
+      "reserved": 0.038541,
+      "budget": 25.0
+    },
+    "behavior_based": false
+  },
+  "cost_only_extension_rule": {
+    "target_repeats": 3,
+    "decision_time": "After complete batch 1, before starting batch 2",
+    "condition": "Remaining budget >= 2 * completed_batch_1_cost * 1.20 + remaining_paper_reserve + 0.10",
+    "uses_behavior": false
+  },
+  "code_commit": "e67e80e016a6aab0a1e336472a741c08e7f0af47",
+  "runs": [
+    {
+      "repetition": 1,
+      "H": 0,
+      "mode": "full",
+      "id": "formation-r1-h0-full"
+    },
+    {
+      "repetition": 1,
+      "H": 100,
+      "mode": "compressed",
+      "id": "formation-r1-h100-compressed"
+    },
+    {
+      "repetition": 1,
+      "H": 100,
+      "mode": "clear",
+      "id": "formation-r1-h100-clear"
+    },
+    {
+      "repetition": 1,
+      "H": 0,
+      "mode": "compressed",
+      "id": "formation-r1-h0-compressed"
+    },
+    {
+      "repetition": 1,
+      "H": 5,
+      "mode": "compressed",
+      "id": "formation-r1-h5-compressed"
+    },
+    {
+      "repetition": 1,
+      "H": 20,
+      "mode": "full",
+      "id": "formation-r1-h20-full"
+    },
+    {
+      "repetition": 1,
+      "H": 1,
+      "mode": "full",
+      "id": "formation-r1-h1-full"
+    },
+    {
+      "repetition": 1,
+      "H": 0,
+      "mode": "clear",
+      "id": "formation-r1-h0-clear"
+    },
+    {
+      "repetition": 1,
+      "H": 100,
+      "mode": "full",
+      "id": "formation-r1-h100-full"
+    },
+    {
+      "repetition": 1,
+      "H": 1,
+      "mode": "compressed",
+      "id": "formation-r1-h1-compressed"
+    },
+    {
+      "repetition": 1,
+      "H": 20,
+      "mode": "compressed",
+      "id": "formation-r1-h20-compressed"
+    },
+    {
+      "repetition": 1,
+      "H": 1,
+      "mode": "clear",
+      "id": "formation-r1-h1-clear"
+    },
+    {
+      "repetition": 1,
+      "H": 20,
+      "mode": "clear",
+      "id": "formation-r1-h20-clear"
+    },
+    {
+      "repetition": 1,
+      "H": 5,
+      "mode": "clear",
+      "id": "formation-r1-h5-clear"
+    },
+    {
+      "repetition": 1,
+      "H": 5,
+      "mode": "full",
+      "id": "formation-r1-h5-full"
+    },
+    {
+      "repetition": 2,
+      "H": 1,
+      "mode": "clear",
+      "id": "formation-r2-h1-clear"
+    },
+    {
+      "repetition": 2,
+      "H": 5,
+      "mode": "clear",
+      "id": "formation-r2-h5-clear"
+    },
+    {
+      "repetition": 2,
+      "H": 1,
+      "mode": "compressed",
+      "id": "formation-r2-h1-compressed"
+    },
+    {
+      "repetition": 2,
+      "H": 0,
+      "mode": "clear",
+      "id": "formation-r2-h0-clear"
+    },
+    {
+      "repetition": 2,
+      "H": 0,
+      "mode": "full",
+      "id": "formation-r2-h0-full"
+    },
+    {
+      "repetition": 2,
+      "H": 1,
+      "mode": "full",
+      "id": "formation-r2-h1-full"
+    },
+    {
+      "repetition": 2,
+      "H": 20,
+      "mode": "compressed",
+      "id": "formation-r2-h20-compressed"
+    },
+    {
+      "repetition": 2,
+      "H": 0,
+      "mode": "compressed",
+      "id": "formation-r2-h0-compressed"
+    },
+    {
+      "repetition": 2,
+      "H": 100,
+      "mode": "full",
+      "id": "formation-r2-h100-full"
+    },
+    {
+      "repetition": 2,
+      "H": 100,
+      "mode": "compressed",
+      "id": "formation-r2-h100-compressed"
+    },
+    {
+      "repetition": 2,
+      "H": 5,
+      "mode": "full",
+      "id": "formation-r2-h5-full"
+    },
+    {
+      "repetition": 2,
+      "H": 5,
+      "mode": "compressed",
+      "id": "formation-r2-h5-compressed"
+    },
+    {
+      "repetition": 2,
+      "H": 100,
+      "mode": "clear",
+      "id": "formation-r2-h100-clear"
+    },
+    {
+      "repetition": 2,
+      "H": 20,
+      "mode": "clear",
+      "id": "formation-r2-h20-clear"
+    },
+    {
+      "repetition": 2,
+      "H": 20,
+      "mode": "full",
+      "id": "formation-r2-h20-full"
+    }
+  ]
+}
