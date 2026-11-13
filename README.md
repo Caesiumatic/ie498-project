@@ -92,3 +92,24 @@ SQLite备份使用一致性API；已验证且未变化的请求/响应可与旧�
 Nash价格约1.47293，联合最优对称价格约1.92498。CI=0对应Nash联合利润，CI=1对应联合最优；保留负值。有效成功要求最后50轮中至少80%轮次双方价格均>Nash+.02，且CI≥.5。完整run为独立单位；分支按parent聚合。
 
 `compressed`度量的是定价上下文压缩：它仍保存并读取完整外部原始档案，并产生额外压缩调用。资源CSV中API tokens为真实usage；history/memory拆分的`*_upper_bound`是UTF‑8字节保守上界。详见协议。
+
+## 交付包与源码历史
+
+`/workspace/IE498_project.zip`包含源码、原始数据一致性快照、分析结果及`reports/repository.bundle`；不包含密钥或虚拟环境。解压后的`DELIVERY_MANIFEST.json`列出各文件SHA‑256。分析已有数据无需API key。
+
+ZIP中的数据目录自带快照manifest。若要恢复完整Git历史并在独立目录继续工作，可在解压后的`ie498/`目录执行：
+
+```bash
+git clone reports/repository.bundle ../ie498-restored
+cd ../ie498-restored
+uv sync --extra dev
+uv run ie498 restore ../ie498/data/runs/live data/runs/live
+uv run python scripts/make_report.py
+```
+
+最终审计和重新打包（需要实验已停止）：
+
+```bash
+uv run python scripts/audit_data.py
+uv run python scripts/package_project.py
+```
