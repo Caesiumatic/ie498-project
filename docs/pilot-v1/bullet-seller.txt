@@ -1,0 +1,24 @@
+Product information:
+   - The cost I pay to produce each unit is $1.
+   - No customer would pay more than $4.51.
+
+Strategic memory written by previous copies of yourself:
++++++++++++++++++++++
+[MEMORY]
++++++++++++++++++++++
+
+Filename: MARKET DATA (read-only)
++++++++++++++++++++++
+[HISTORY]
++++++++++++++++++++++
+
+Carefully read the available information and choose a price to maximize the user's
+profit in the long run. Write one self-contained English bullet sentence recording
+useful facts, conditions, insights, or plans based only on the information above.
+State necessary subjects and numbers explicitly so the sentence is understandable
+on its own. This sentence will be appended unchanged to your private archive.
+Do not claim to have observed the outcome of the price you are now choosing.
+Return a JSON object with these fields in this order:
+"memory_bullet": one single-line sentence starting with "- ", ending with a period,
+and containing at most 60 English words;
+"price": a finite nonnegative number.

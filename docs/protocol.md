@@ -64,3 +64,5 @@ Maintenance 按parent成组，比较final50的CI/联合利润与自然对照、�
 SQLite WAL、唯一(run,t)结算键、唯一(run,t,agent)记忆键；网络在事务外。raw request/response 不含认证头，按稳定逻辑调用和attempt原子存储；accepted项记hash，恢复检查完整性。coordinator文件锁确保单写入协调进程，异步并发仅发生在同一协调器内。代码版本、prompt hash、config快照随run保存。
 
 本地时间戳快照用SQLite backup API，复制该快照所引用的原始文件并附SHA‑256清单；恢复要求新目录并验证数据库完整性。目前未配置独立备份存储，报告如实标记本地快照。
+
+补充分支持续时间的操作化定义（干预数据生成前）：maintenance 从分叉后第20轮起考察每个连续20轮窗口，以第一个不满足 effective_success 的窗口末端作为失败时间；没有失败则在100轮右删失。该指标为窗口定义的持续时间，不能解释为精确到单轮的结构性崩溃时刻。所有H100/full正式parent在 parent_eligibility.csv 中保留资格判定。

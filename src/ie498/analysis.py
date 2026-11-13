@@ -46,7 +46,7 @@ def bootstrap(values,seed=498):
 def analyze(store,destination):
     out=Path(destination);out.mkdir(parents=True,exist_ok=True)
     runs=store.rows('SELECT * FROM runs ORDER BY id')
-    summary=[];long=[];resources=[];sensitivity=[]
+    summary=[];long=[];resources=[];sensitivity=[];memory_audit=[]
     bench=Market().benchmarks();atomic_json(out/'benchmarks.json',bench)
     for run in runs:
         c=json.loads(run['config']);history=store.history(run['id'])
@@ -65,11 +65,14 @@ def analyze(store,destination):
         attempts=store.rows('SELECT * FROM api_attempts WHERE run_id=?',(run['id'],))
         views=[json.loads(r['payload']) for r in store.rows('SELECT payload FROM memory_views WHERE run_id=?',(run['id'],))]
         usage=[json.loads(a['usage'] or '{}') for a in attempts]
+        for entry in store.rows('SELECT t,agent,text,call_id FROM memory_entries WHERE run_id=? AND t>? ORDER BY t,agent',(run['id'],run['checkpoint'])):
+            memory_audit.append(dict(run=run['id'],**entry,word_count=len(entry['text'][2:].split()),utf8_bytes=len(entry['text'].encode())))
         resources.append(dict(run=run['id'],stage=c['stage'],calls=len(attempts),
             seller_calls=sum(a['purpose']=='seller' for a in attempts),compressor_calls=sum(a['purpose']=='compressor' for a in attempts),
             retries=sum(a['attempt']>1 for a in attempts),uncertain=sum(a['status']=='uncertain' for a in attempts),
             input_tokens=sum(u.get('prompt_tokens',0) for u in usage),
             cached_input_tokens=sum(u.get('prompt_tokens_details',{}).get('cached_tokens',0) for u in usage),
+            cache_write_tokens=sum(u.get('prompt_tokens_details',{}).get('cache_write_tokens',0) for u in usage),
             output_tokens=sum(u.get('completion_tokens',0) for u in usage),
             reasoning_tokens=sum(u.get('completion_tokens_details',{}).get('reasoning_tokens',0) for u in usage),
             cost_usd=sum(a['cost'] for a in attempts),
@@ -84,6 +87,7 @@ def analyze(store,destination):
     df=pd.DataFrame(summary);df.to_csv(out/'runs.csv',index=False)
     pd.DataFrame(long).to_csv(out/'rounds.csv',index=False)
     pd.DataFrame(resources).to_csv(out/'resources.csv',index=False)
+    pd.DataFrame(memory_audit).to_csv(out/'memory_audit.csv',index=False)
     pd.DataFrame(sensitivity).to_csv(out/'threshold_sensitivity.csv',index=False)
     atomic_json(out/'status.json',{'spending':store.spending(),'runs':summary})
     groups=[];minimum=[]
@@ -158,7 +162,14 @@ def _plots(store,runs,out,groups,df,b):
 
 
 def _paired(store,runs,out):
-    pairs=[];events=[]
+    pairs=[];events=[];parents=[]
+    for run in runs:
+        c=json.loads(run['config'])
+        if c['stage']=='formation' and c['H']==100 and c['mode']=='full':
+            hist=store.history(run['id'])
+            parents.append(dict(parent=run['id'],status=run['status'],checkpoint_available=len(hist)>=200,
+                                eligible=len(hist)>=200 and metrics(hist[150:200]).get('effective_success',False)))
+    pd.DataFrame(parents).to_csv(out/'parent_eligibility.csv',index=False)
     for run in runs:
         if not run['parent'] or run['status']!='completed':continue
         c=json.loads(run['config']);checkpoint=run['checkpoint']
@@ -171,6 +182,10 @@ def _paired(store,runs,out):
         pairs.append(dict(parent=run['parent'],child=run['id'],stage=c['stage'],eligible_parent=eligible,
                           delta_CI=a['CI']-b['CI'],delta_joint_profit=a['joint_profit']-b['joint_profit'],
                           effective_success=a['effective_success']))
+        if c['stage']=='maintenance':
+            failure=next((i+20 for i in range(len(follow)-19) if not metrics(follow[i:i+20])['effective_success']),None)
+            pairs[-1].update(first_failed_20_round_window_end=failure,
+                             survival_censored=failure is None,followup_rounds=len(follow))
         if c.get('shock'):
             agent=1-c['shock']['agent'];event=c['shock']['t']
             diffs=[]

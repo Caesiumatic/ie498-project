@@ -1,5 +1,5 @@
 {
-  "protocol_version": "1.0",
+  "protocol_version": "1.1",
   "architecture": "paper_reference",
   "provider": "openai",
   "model": "gpt-6-luna",

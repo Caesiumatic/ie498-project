@@ -21,8 +21,12 @@ class BudgetStop(Exception):
 
 
 class Store:
-    def __init__(self, root, budget=15.0):
+    def __init__(self, root, budget=15.0, readonly=False):
         self.root = Path(root); self.root.mkdir(parents=True, exist_ok=True)
+        if readonly:
+            self.db=sqlite3.connect(f"file:{(self.root/'experiments.sqlite').resolve()}?mode=ro",uri=True)
+            self.db.row_factory=sqlite3.Row
+            return
         self.db = sqlite3.connect(self.root / "experiments.sqlite")
         self.db.row_factory = sqlite3.Row
         self.db.executescript('''

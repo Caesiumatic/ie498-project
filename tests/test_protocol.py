@@ -2,6 +2,7 @@ import asyncio
 import copy
 import json
 import sqlite3
+import re
 import numpy as np
 import pytest
 
@@ -126,6 +127,14 @@ def test_cost_reasoning_not_double_counted():
        'completion_tokens_details':{'reasoning_tokens':80}}
     prices={'input':.1,'cached_input':.01,'output':.5}
     assert cost_from_usage(u,prices)==pytest.approx(.000105)
+
+
+def test_structured_sentence_constraint(config):
+    body=request_body(config,'test','seller')
+    pattern=body['response_format']['json_schema']['schema']['properties']['memory_bullet']['pattern']
+    assert re.fullmatch(pattern,'- My cost is $1.00; I will test $1.75 to assess profit.')
+    for invalid in ['- One sentence. Another sentence.','- '+('word '*61).strip()+'.','- New\nline.']:
+        assert not re.fullmatch(pattern,invalid)
 
 
 def test_fork_metrics_backup_analysis(store,config,tmp_path):

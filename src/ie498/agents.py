@@ -20,7 +20,9 @@ def request_body(config, prompt, purpose):
     if config.get('temperature') is not None:
         body['temperature']=config['temperature']
     if not paper:
-        props = {"memory_bullet": {"type": "string"}}
+        # One sentence, <=60 whitespace-delimited words; decimal points remain legal.
+        word = r"(?:[^\s.!?]|\.[0-9])+"
+        props = {"memory_bullet": {"type": "string", "pattern": r"^- " + word + r"(?: " + word + r"){0,59}\.$"}}
         if purpose == "seller":
             props["price"] = {"type": "number"}
         body["response_format"] = {"type": "json_schema", "json_schema": {"name": "decision", "strict": True,
@@ -56,7 +58,7 @@ class Caller:
             status_code = raw.get("http_status", 0)
             # Unknown server processing remains conservatively charged.
             uncertain = not status_code or status_code >= 500
-            self.store.finish_attempt(row["id"], "uncertain" if uncertain else "failed", row["reserved"] if uncertain else cost,
+            self.store.finish_attempt(row["id"], "uncertain" if uncertain else "failed", row["reserved"] if uncertain else (cost if usage else 0),
                                       usage, raw_path=path, error=json.dumps(raw["error"])[:1000])
             return None
         try:

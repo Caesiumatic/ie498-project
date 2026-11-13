@@ -43,6 +43,7 @@ def main():
     p=sub.add_parser('plan');p.add_argument('--repeats',type=int,default=3)
     for name in ('mock','smoke','pilot','formation'):
         p=sub.add_parser(name);p.add_argument('--concurrency',type=int,default=8)
+        p.add_argument('--tag',default='')
         if name=='formation':
             p.add_argument('--repeats',type=int,default=3);p.add_argument('--batch',type=int)
         if name=='mock':p.add_argument('--rounds',type=int,default=8)
@@ -57,7 +58,7 @@ def main():
     if args.command=='benchmarks':print(json.dumps(Market().benchmarks(),indent=2));return
     if args.command=='restore':print(restore(args.source,args.destination));return
     c=load_config(args.config)
-    store=Store(args.data,c['budget_usd'])
+    store=Store(args.data,c['budget_usd'],readonly=args.command in ('analyze','status'))
     try:
         if args.command=='status':
             print(json.dumps({'spending':store.spending(),'runs':store.rows('SELECT id,status,error,parent,checkpoint FROM runs')},indent=2));return
@@ -77,7 +78,7 @@ def main():
             if args.run:asyncio.run(run_batch(store,[args.child]))
             print(args.child);return
         if args.command=='resume':
-            ids=args.runs or [r['id'] for r in store.rows("SELECT id FROM runs WHERE status!='completed'")]
+            ids=args.runs or [r['id'] for r in store.rows("SELECT id FROM runs WHERE status NOT IN ('completed','paused_protocol')")]
             asyncio.run(run_batch(store,ids,args.concurrency));return
         definitions=[]
         if args.command=='mock':
@@ -101,13 +102,16 @@ def main():
             cells=plan_conditions(args.repeats)
             definitions=[(r['id'],dict(c,stage='formation',H=r['H'],mode=r['mode'],repetition=r['repetition']))
                          for r in cells if args.batch is None or r['repetition']==args.batch]
+        if args.tag:
+            definitions=[(r.replace(args.command+'-',args.command+'-'+args.tag+'-',1),v) for r,v in definitions]
         existing={r['id']:json.loads(r['config']) for r in store.rows('SELECT id,config FROM runs')}
         for run,config in definitions:
             if run not in existing:create_run(store,run,config)
             elif existing[run]!=config:raise ValueError(f'Existing run {run} has different configuration')
         manifest={'stage':args.command,'code_commit':git_commit(),'prompt_hash':prompt_hash(),
                   'runs':[{'id':r,'config':v} for r,v in definitions]}
-        atomic_json(ROOT/f'data/manifests/{args.command}.json',manifest)
+        suffix='-'+args.tag if args.tag else ''
+        atomic_json(ROOT/f'data/manifests/{args.command}{suffix}.json',manifest)
         asyncio.run(run_batch(store,[r for r,_ in definitions],args.concurrency))
         print(json.dumps(store.spending()))
     finally:store.close()
