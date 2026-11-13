@@ -102,7 +102,7 @@ v1.0 pilot曾出现超过60词和多句话输出；失败样本未被清洗成�
         h=row['minimum_tested_effective_H'];e=row['evidence']
         if e:
             text+=f"- {row['mode']}：H={h}；{e['successes']}/{e['n']}成功，Wilson 95%区间[{e['wilson_low']:.3f}, {e['wilson_high']:.3f}]。\n"
-        else:text+=f"- {row['mode']}：在当前网格和样本中尚未识别。\n
+        else:text+=f"- {row['mode']}：在当前网格和样本中尚未识别。\n"
     text+='\n## Maintenance与deviation response\n\n'
     eligible=read_csv(out/'parent_eligibility.csv');paired=read_csv(out/'paired.csv')
     if len(eligible):text+=f"H100/full正式parent共{len(eligible)}个，其中{int(eligible.eligible.sum())}个在151–200轮满足有效成功标准。\n\n"
