@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import sqlite3
@@ -16,6 +17,9 @@ def file_hash(p):
 
 
 def snapshot(store, destination):
+    previous=max((p for p in Path(destination).glob('*') if p.is_dir() and (p/'manifest.json').exists()),default=None)
+    previous_files=json.loads((previous/'manifest.json').read_text())['files'] if previous else {}
+    linked=0
     dest = Path(destination) / datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
     dest.mkdir(parents=True)
     target = sqlite3.connect(dest / 'experiments.sqlite')
@@ -26,12 +30,22 @@ def snapshot(store, destination):
         for rel in [row['raw_path'],f"requests/{row['id']}.json"]:
             if rel and (store.root/rel).exists():
                 (dest/rel).parent.mkdir(parents=True,exist_ok=True)
-                shutil.copy2(store.root/rel,dest/rel)
+                # Reuse only verified immutable payloads from an earlier backup,
+                # never link the live database or live payload files.
+                reused=False
+                if previous and rel in previous_files and (previous/rel).exists():
+                    expected=previous_files[rel]
+                    if file_hash(store.root/rel)==expected and file_hash(previous/rel)==expected:
+                        try:
+                            os.link(previous/rel,dest/rel);linked+=1;reused=True
+                        except OSError:pass
+                if not reused:shutil.copy2(store.root/rel,dest/rel)
     commits={r[0] for r in db.execute('SELECT DISTINCT commit_hash FROM runs')}
     if db.execute("SELECT name FROM sqlite_master WHERE name='execution_epochs'").fetchone():
         commits.update(r[0] for r in db.execute('SELECT DISTINCT commit_hash FROM execution_epochs'))
     commits=sorted(commits);db.close()
     manifest={"source":str(store.root.resolve()),"code_commits":commits,"independent_backup":False,
+              "immutable_files_shared_with_previous_backup":linked,
               "files":{str(p.relative_to(dest)):file_hash(p) for p in dest.rglob('*') if p.is_file()}}
     atomic_json(dest/'manifest.json',manifest)
     return dest

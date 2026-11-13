@@ -201,3 +201,19 @@ def test_shock_shares_only_prespecified_first_actions(store,config):
     assert shocked['prices'][0]==source['prices'][0]*.9 and shocked['prices'][1]==source['prices'][1]
     assert shocked['action_call_ids']==['source:4:0:seller','source:4:1:seller']
     assert len(store.rows("SELECT * FROM api_attempts WHERE run_id='shock-shared'"))==8
+
+
+def test_backup_reuse_remains_isolated_from_live_files(store,config,tmp_path):
+    create_run(store,'backup-source',dict(config,T=1))
+    asyncio.run(run_batch(store,['backup-source']))
+    first=snapshot(store,tmp_path/'versions')
+    second=snapshot(store,tmp_path/'versions')
+    rel=store.rows("SELECT raw_path FROM api_attempts ORDER BY id LIMIT 1")[0]['raw_path']
+    original=(store.root/rel).read_bytes()
+    # Even an accidental in-place edit of live data must not mutate snapshots.
+    (store.root/rel).write_text('changed live file')
+    assert (first/rel).read_bytes()==original
+    assert (second/rel).read_bytes()==original
+    recovered=restore(second,tmp_path/'independent-restore')
+    assert (recovered/rel).read_bytes()==original
+    assert (first/'experiments.sqlite').stat().st_ino!=(second/'experiments.sqlite').stat().st_ino

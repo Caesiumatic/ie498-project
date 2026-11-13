@@ -85,7 +85,7 @@ uv run ie498 restore data/backups/live/TIMESTAMP data/restored/live-copy
 uv run ie498 --data data/restored/live-copy status
 ```
 
-SQLite备份使用一致性API，恢复验证全部文件hash和数据库完整性。目前只有本地快照，尚无独立远端备份。完整数据、虚拟环境和密钥被Git忽略；交付归档会包含数据和报告，但排除密钥。
+SQLite备份使用一致性API；已验证且未变化的请求/响应可与旧备份共享文件，live文件和数据库不共享。恢复验证全部文件hash和数据库完整性，并复制到新目录；需要改动时使用恢复副本。目前只有本地快照，尚无独立远端备份。完整数据、虚拟环境和密钥被Git忽略；交付归档会包含数据和报告，但排除密钥。
 
 ## 指标解释
 

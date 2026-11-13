@@ -19,7 +19,7 @@ def main():
     with coordinator_lock(store):
         pending=store.rows("SELECT COUNT(*) n FROM api_attempts WHERE status='pending'")[0]['n']
         if pending:raise ValueError('Reconcile interrupted requests before final packaging')
-        snap=snapshot(store,ROOT/'data/backups/live')
+        snap=snapshot(store,ROOT/'data/backups/batches')
         verified=ROOT/'data/restored'/snap.name
         restore(snap,verified)
         bundle=ROOT/'reports/repository.bundle'
