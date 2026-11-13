@@ -7,16 +7,16 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
 from ie498.agents import request_body,cost_from_usage
 from ie498.environment import Market
-from ie498.memory import build_compressor,build_seller,digest,prompt_hash,visible_history
+from ie498.memory import build_compressor,build_seller,digest,parse_output,prompt_hash,visible_history
 from ie498.storage import Store,atomic_json
 
 
 def main():
     store=Store(ROOT/'data/runs/live',readonly=True)
-    counts=dict(runs=0,rounds=0,memory_entries=0,attempts=0,accepted_attempts=0,verified_seller_inputs=0,verified_compressor_inputs=0)
-    configs={}
+    counts=dict(runs=0,rounds=0,memory_entries=0,attempts=0,accepted_attempts=0,verified_seller_inputs=0,verified_compressor_inputs=0,reparsed_current_outputs=0)
+    configs={};hashes={}
     for run in store.rows('SELECT * FROM runs ORDER BY id'):
-        counts['runs']+=1;c=json.loads(run['config']);configs[run['id']]=c
+        counts['runs']+=1;c=json.loads(run['config']);configs[run['id']]=c;hashes[run['id']]=run['prompt_hash']
         history=store.history(run['id']);counts['rounds']+=len(history)
         archives=[store.archive(run['id'],i) for i in (0,1)]
         assert [r['t'] for r in history]==list(range(1,len(history)+1)),run['id']
@@ -72,6 +72,10 @@ def main():
             counts['accepted_attempts']+=1
             raw=json.loads((store.root/row['raw_path']).read_text())
             assert raw['model']==configs[row['run_id']]['model']
+            if hashes[row['run_id']]==prompt_hash():
+                reparsed=parse_output(raw['choices'][0]['message']['content'],row['purpose'],configs[row['run_id']]['architecture'])
+                assert reparsed==json.loads(row['parsed']),row['id']
+                counts['reparsed_current_outputs']+=1
             if raw.get('usage'):
                 expected=cost_from_usage(raw['usage'],configs[row['run_id']]['prices'])
                 assert abs(expected-row['cost'])<1e-10,row['id']
@@ -80,7 +84,7 @@ def main():
     result={'passed':True,'counts':counts,'spending':spending,'prompt_hash':prompt_hash(),
             'checks':['consecutive rounds','immutable memory and fork lineage','economic recomputation',
                       'price intervention arithmetic','private input reconstruction for current prompts',
-                      'full archive compressor input reconstruction','accepted response provenance','raw/request checksums','usage-cost reconciliation','budget']}
+                      'full archive compressor input reconstruction','accepted response provenance','reparse current-protocol raw outputs','raw/request checksums','usage-cost reconciliation','budget']}
     atomic_json(ROOT/'reports/data_audit.json',result);print(json.dumps(result,indent=2));store.close()
 
 
