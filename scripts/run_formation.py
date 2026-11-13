@@ -10,7 +10,7 @@ from ie498.agents import Caller
 from ie498.backup import snapshot
 from ie498.cli import load_env,load_config,plan_conditions
 from ie498.memory import prompt_hash
-from ie498.runner import create_run,coordinator_lock,run_one,git_commit
+from ie498.runner import create_run,coordinator_lock,run_one,git_commit,same_config
 from ie498.storage import Store,atomic_json
 
 
@@ -26,7 +26,7 @@ async def execute(store,freeze):
         c=dict(config,stage='formation',H=row['H'],mode=row['mode'],repetition=row['repetition'])
         existing=store.rows('SELECT config FROM runs WHERE id=?',(row['id'],))
         if not existing:create_run(store,row['id'],c)
-        elif json.loads(existing[0]['config'])!=c:raise ValueError('Existing run differs from plan')
+        elif not same_config(json.loads(existing[0]['config']),c):raise ValueError('Existing run differs from plan')
     atomic_json(ROOT/'data/manifests/formation.json',dict(freeze,code_commit=git_commit(),runs=definitions))
     paper='pilot-v11-paper'
     paper_task=asyncio.create_task(run_one(store,caller,paper,stop))

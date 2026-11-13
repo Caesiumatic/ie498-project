@@ -15,6 +15,11 @@ def git_commit():
     return p.stdout.strip() if p.returncode == 0 else "uncommitted"
 
 
+def same_config(a,b):
+    """A global budget amendment does not mutate the scientific run settings."""
+    return {k:v for k,v in a.items() if k!='budget_usd'}=={k:v for k,v in b.items() if k!='budget_usd'}
+
+
 def validate_config(c):
     if c["architecture"] not in ("bullet_memory", "paper_reference") or c["mode"] not in ("clear", "full", "compressed"):
         raise ValueError("Invalid architecture or memory mode")

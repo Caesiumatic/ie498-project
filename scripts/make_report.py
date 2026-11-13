@@ -46,7 +46,7 @@ def main():
 
 本项目在 logit 需求的重复 Bertrand 双企业博弈中，研究可见市场历史 H∈{{0,1,5,20,100}} 与 clear、full、compressed 战略记忆的影响。所有真实卖家和压缩器使用用户指定的 GPT‑6 Luna，low 推理设置。主实验独立单位为300轮的完整双企业run。
 
-当前已完成 **{len(primary)} 个正式formation run**，其中 **{successes} 个**满足预先定义的有效超竞争标准。完成的pilot有 {sum(pilots.status=='completed')} 个；中断/失败pilot保留在独立记录中。费用账本共 **${spending['spent']:.6f}**，其中未知处理状态的保守计费 **${uncertain:.6f}**，总授权预算$15。下文仅依据已保存数据陈述结论。
+当前已完成 **{len(primary)} 个正式formation run**，其中 **{successes} 个**满足预先定义的有效超竞争标准。完成的pilot有 {sum(pilots.status=='completed')} 个；中断/失败pilot保留在独立记录中。费用账本共 **${spending['spent']:.6f}**，其中未知处理状态的保守计费 **${uncertain:.6f}**，总授权预算${spending['budget']:.2f}（由用户从$15提高）。下文仅依据已保存数据陈述结论。
 
 ## 研究问题与博弈机制
 

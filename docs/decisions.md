@@ -19,3 +19,4 @@
 - D15：shock增加可选`share_parent_first_actions`：仅当子分支首轮的完整请求hash与parent该轮accepted动作严格相同才复用，记录源call ID；随后各轮独立采样。这样冲击轮与自然对照的差别精确为一家的90%执行价，减少同时重新采样引入的差异。该选项不用于formation，也不用于改变H/mode的maintenance分支。
 - D16：完整300轮v1.1 pilot：full-1 final50 CI=0.9963，有效成功；clear CI=0.8701，有效成功；compressed CI=-1.2647，未成功。保留这些差异，固定GPT‑6 Luna low与v1.1 prompts，不以正向结果为目标改写策略指令。
 - D17：无缓存写入smoke通过，usage确认cache_write_tokens=0。预算冻结时累计$4.82975667；基于完整pilot实际usage、低H只扣除保守估计的history成本、其余archive/output长度仍按H100，15格一批预测$9.47058769。每格3次不可负担，冻结每格1次、T=300，另留4%批次余量、paper每剩余轮$0.003与$0.10缓冲。费用护栏仍为$15硬上限。连续指标n=1不生成虚假的bootstrap精度，成功率保留Wilson宽区间。预算决定重复数不使用行为结果。
+- D18：第一批formation仍在运行时，用户明确把总预算从$15提高到$25。全球账本上限已更新，历史run的原config预算字段保持不变；只忽略预算字段进行后续相同科学配置匹配。当前计划扩展为每格2个独立300轮run，第二批保持相同模型、prompt、阈值和随机化规则。原$15冻结快照保存在docs/formation-freeze-budget15.json。若第一批完整实测费用显示剩余预算能以20%余量支付另外两批，可在第二批开始前仅据成本扩展到原目标3次；该规则不读取formation价格、利润或成功结果来决定样本量。

@@ -9,7 +9,7 @@ from .analysis import analyze
 from .backup import restore, snapshot
 from .environment import Market
 from .memory import ROOT, prompt_hash
-from .runner import create_run, git_commit, run_batch
+from .runner import create_run, git_commit, run_batch, same_config
 from .storage import Store, atomic_json
 
 
@@ -48,6 +48,7 @@ def main():
             p.add_argument('--repeats',type=int,default=3);p.add_argument('--batch',type=int)
         if name=='mock':p.add_argument('--rounds',type=int,default=8)
     p=sub.add_parser('resume');p.add_argument('runs',nargs='*');p.add_argument('--concurrency',type=int,default=8)
+    p=sub.add_parser('run');p.add_argument('run_id')
     p=sub.add_parser('fork');p.add_argument('parent');p.add_argument('child');p.add_argument('--checkpoint',type=int,default=200)
     p.add_argument('--H',type=int,default=1);p.add_argument('--mode',choices=['clear','full','compressed'],default='clear')
     p.add_argument('--shock-agent',type=int,choices=[0,1]);p.add_argument('--share-actions',action='store_true');p.add_argument('--run',action='store_true')
@@ -81,6 +82,14 @@ def main():
         if args.command=='resume':
             ids=args.runs or [r['id'] for r in store.rows("SELECT id FROM runs WHERE status NOT IN ('completed','paused_protocol','paused_budget_plan','paused_manual')")]
             asyncio.run(run_batch(store,ids,args.concurrency));return
+        if args.command=='run':
+            if c['stage'] in ('formation','maintenance','shock'):
+                raise ValueError('Use the frozen formation command or checkpoint fork for this stage')
+            if c['stage']=='planned':c['stage']='mock' if c['provider']=='mock' else 'pilot'
+            existing=store.rows('SELECT config FROM runs WHERE id=?',(args.run_id,))
+            if not existing:create_run(store,args.run_id,c)
+            elif not same_config(json.loads(existing[0]['config']),c):raise ValueError('Existing run has a different config')
+            asyncio.run(run_batch(store,[args.run_id],1));return
         definitions=[]
         if args.command=='mock':
             c.update(provider='mock',stage='mock',T=args.rounds)
@@ -108,7 +117,7 @@ def main():
         existing={r['id']:json.loads(r['config']) for r in store.rows('SELECT id,config FROM runs')}
         for run,config in definitions:
             if run not in existing:create_run(store,run,config)
-            elif existing[run]!=config:raise ValueError(f'Existing run {run} has different configuration')
+            elif not same_config(existing[run],config):raise ValueError(f'Existing run {run} has different configuration')
         manifest={'stage':args.command,'code_commit':git_commit(),'prompt_hash':prompt_hash(),
                   'runs':[{'id':r,'config':v} for r,v in definitions]}
         suffix='-'+args.tag if args.tag else ''

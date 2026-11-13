@@ -13,7 +13,7 @@
     "max_attempts": 3,
     "context_limit": 1050000,
     "evaluation_window": 50,
-    "budget_usd": 15.0,
+    "budget_usd": 25.0,
     "prices": {
       "input": 0.1,
       "cached_input": 0.01,
@@ -35,7 +35,7 @@
     "transport_version": "stateless-single-message-no-cache-write-v1"
   },
   "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
-  "repeats": 1,
+  "repeats": 2,
   "desired_repeats": 3,
   "estimated_batch_cost_usd": 9.470587685502899,
   "batch_cost_safety_factor": 1.04,
@@ -159,5 +159,24 @@
       "projected_cost_usd": 1.054545
     }
   ],
-  "sampling_decision_uses_behavior": false
+  "sampling_decision_uses_behavior": false,
+  "budget_amendment": {
+    "reason": "User raised total budget to USD 25 before completion of the first formation batch",
+    "prior_budget": 15,
+    "new_budget": 25,
+    "prior_repeats": 1,
+    "new_repeats": 2,
+    "balance_at_amendment": {
+      "spent": 5.497420695,
+      "reserved": 0.038541,
+      "budget": 25.0
+    },
+    "behavior_based": false
+  },
+  "cost_only_extension_rule": {
+    "target_repeats": 3,
+    "decision_time": "After complete batch 1, before starting batch 2",
+    "condition": "Remaining budget >= 2 * completed_batch_1_cost * 1.20 + remaining_paper_reserve + 0.10",
+    "uses_behavior": false
+  }
 }
