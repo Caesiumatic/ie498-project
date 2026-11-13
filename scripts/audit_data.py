@@ -7,17 +7,18 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
 from ie498.agents import request_body,cost_from_usage
 from ie498.environment import Market
-from ie498.memory import build_seller,digest,prompt_hash,visible_history
+from ie498.memory import build_compressor,build_seller,digest,prompt_hash,visible_history
 from ie498.storage import Store,atomic_json
 
 
 def main():
     store=Store(ROOT/'data/runs/live',readonly=True)
-    counts=dict(runs=0,rounds=0,memory_entries=0,attempts=0,accepted_attempts=0,verified_seller_inputs=0)
+    counts=dict(runs=0,rounds=0,memory_entries=0,attempts=0,accepted_attempts=0,verified_seller_inputs=0,verified_compressor_inputs=0)
     configs={}
     for run in store.rows('SELECT * FROM runs ORDER BY id'):
         counts['runs']+=1;c=json.loads(run['config']);configs[run['id']]=c
         history=store.history(run['id']);counts['rounds']+=len(history)
+        archives=[store.archive(run['id'],i) for i in (0,1)]
         assert [r['t'] for r in history]==list(range(1,len(history)+1)),run['id']
         if run['status']=='completed' and c['stage']!='cache_calibration':assert len(history)==c['T'],run['id']
         entries=store.rows('SELECT * FROM memory_entries WHERE run_id=? ORDER BY t,agent',(run['id'],))
@@ -40,8 +41,16 @@ def main():
             for agent in (0,1):
                 view=store.rows('SELECT payload FROM memory_views WHERE run_id=? AND t=? AND agent=?',(run['id'],row['t'],agent))[0]
                 view=json.loads(view['payload'])
-                archive=store.archive(run['id'],agent)[:row['t']-1]
+                archive=archives[agent][:row['t']-1]
                 assert digest(archive)==view['source_hash']
+                assert view['source_range']==([1,len(archive)] if archive else [])
+                if c['architecture']=='bullet_memory' and c['mode']=='compressed':
+                    if archive:
+                        call=f"{run['id']}:{row['t']}:{agent}:compressor"
+                        compressed=store.accepted(call,digest(request_body(c,build_compressor(archive),'compressor')))
+                        assert compressed is not None and compressed['memory_bullet']==view['text'],call
+                        counts['verified_compressor_inputs']+=1
+                    else:assert view['text']==''
                 if c['architecture']=='bullet_memory' and c['mode']=='clear':assert view['text']==''
                 if c['architecture']=='bullet_memory' and c['mode']=='full':assert view['text']=='\n'.join(archive)
                 past=history[:row['t']-1]
@@ -54,7 +63,8 @@ def main():
     for row in store.rows('SELECT * FROM api_attempts'):
         counts['attempts']+=1
         request=store.root/f"requests/{row['id']}.json"
-        if request.exists():assert digest(json.loads(request.read_text()))==row['request_hash'],row['id']
+        assert request.exists(),row['id']
+        assert digest(json.loads(request.read_text()))==row['request_hash'],row['id']
         if row['raw_path']:
             raw_file=store.root/row['raw_path']
             assert digest(raw_file.read_text())==row['raw_sha256'],row['id']
@@ -70,7 +80,7 @@ def main():
     result={'passed':True,'counts':counts,'spending':spending,'prompt_hash':prompt_hash(),
             'checks':['consecutive rounds','immutable memory and fork lineage','economic recomputation',
                       'price intervention arithmetic','private input reconstruction for current prompts',
-                      'accepted response provenance','raw/request checksums','usage-cost reconciliation','budget']}
+                      'full archive compressor input reconstruction','accepted response provenance','raw/request checksums','usage-cost reconciliation','budget']}
     atomic_json(ROOT/'reports/data_audit.json',result);print(json.dumps(result,indent=2));store.close()
 
 
