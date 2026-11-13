@@ -1,0 +1,22 @@
+{
+  "runs": [
+    {
+      "id": "pilot-v11-full-2",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "pilot-v11-full-3",
+      "status": "completed",
+      "error": null
+    }
+  ],
+  "snapshot": "/workspace/ie498/data/backups/batches/20261113T065755735469Z",
+  "code_commit": "a59aed3aa24d9f0d6e979e643e15b86047948e45",
+  "spending": {
+    "spent": 32.19904462,
+    "reserved": 0,
+    "budget": null
+  },
+  "interpretation": "Supplemental completion after formation; excluded from formal matrix"
+}

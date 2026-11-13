@@ -19,3 +19,4 @@ reports/live/memory_audit.csv
 reports/progress/
 reports/delivery_manifest.json
 reports/*.log
+reports/restore_verification.json

@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "counts": {
+    "runs": 97,
+    "rounds": 15634,
+    "memory_entries": 30582,
+    "attempts": 40917,
+    "accepted_attempts": 40886,
+    "verified_seller_inputs": 30612,
+    "verified_compressor_inputs": 9572,
+    "reparsed_current_outputs": 40196
+  },
+  "spending": {
+    "spent": 32.19904462,
+    "reserved": 0,
+    "budget": null
+  },
+  "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
+  "checks": [
+    "consecutive rounds",
+    "immutable memory and fork lineage",
+    "economic recomputation",
+    "price intervention arithmetic",
+    "private input reconstruction for current prompts",
+    "full archive compressor input reconstruction",
+    "accepted response provenance",
+    "reparse current-protocol raw outputs",
+    "raw/request checksums",
+    "usage-cost reconciliation",
+    "budget"
+  ]
+}

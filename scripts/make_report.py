@@ -47,7 +47,7 @@ def main():
 
 本项目在 logit 需求的重复 Bertrand 双企业博弈中，研究可见市场历史 H∈{{0,1,5,20,100}} 与 clear、full、compressed 战略记忆的影响。所有真实卖家和压缩器使用用户指定的 GPT‑6 Luna，low 推理设置。主实验独立单位为300轮的完整双企业run。
 
-当前已完成 **{len(primary)} 个正式formation run**，其中 **{successes} 个**满足预先定义的有效超竞争标准。完成的pilot有 {sum(pilots.status=='completed')} 个；中断/失败pilot保留在独立记录中。费用账本共 **${spending['spent']:.6f}**，其中未知处理状态的保守计费 **${uncertain:.6f}**，总授权预算：{budget_label(spending)}（预算变更按用户指令记录）。下文仅依据已保存数据陈述结论。
+当前已完成 **{len(primary)} 个正式formation run**，其中 **{successes} 个**满足预先定义的有效超竞争标准。完成的pilot有 {sum(pilots.status=='completed')} 个；中断/失败pilot保留在独立记录中。费用账本共 **${spending['spent']:.6f}**，其中未知处理状态的保守计费 **${uncertain:.6f}**，预算状态为{budget_label(spending)}。下文仅依据已保存数据陈述结论。第4、5批的30个未开始计划按用户指令取消，未产生API费用。
 
 ## 研究问题与博弈机制
 
@@ -67,7 +67,7 @@ def main():
 
 卖家只读成本、$4.51文字ceiling、最近H轮允许的反馈和自身记忆，不读需求公式、研究条件、成功阈值或剩余轮数。H=0无市场反馈；此时full/compressed积累的是自生成策略，而不是环境观测。双方输入在本轮任一响应返回前固定；本轮bullet只能引用截至上一轮的结果。执行价冲击在双方提交后应用。
 
-独立Chat Completions请求不携带会话链接，不给工具访问。SQLite事务保证一次结算与一次追加；有效响应按逻辑调用缓存，仅用于同一调用恢复。新轮次即使prompt相同仍重新采样。调用前预留在途费用，失败有界重试，所有尝试保留原始请求/响应和费用。数据已通过mock端到端、部分响应后恢复、预算、分叉与备份恢复测试。
+独立Chat Completions请求不携带会话链接，不给工具访问。SQLite事务保证一次结算与一次追加；有效响应按逻辑调用缓存，仅用于同一调用恢复。新轮次即使prompt相同仍重新采样。调用前预留在途费用，失败有界重试，所有尝试保留原始请求/响应和费用。数据已通过mock端到端、部分响应后恢复、预算、分叉与备份恢复测试。本次22项测试通过；全量原始响应、输入边界、结算和费用核验见[data_audit.json](data_audit.json)，交付恢复核验见[restore_verification.json](restore_verification.json)。正式阶段一次压缩输出达到2048 token上限，已按既定规则重试成功，所有尝试保留。
 
 v1.0 pilot曾出现超过60词和多句话输出；失败样本未被清洗成成功样本。v1.1在正式阶段前加入结构化单句/词数约束并重新开始独立pilot，原输出与初始prompt仍保留。详情见 docs/decisions.md。
 

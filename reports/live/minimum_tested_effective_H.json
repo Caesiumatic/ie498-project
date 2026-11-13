@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "clear",
+    "minimum_tested_effective_H": null,
+    "evidence": null,
+    "interpretation": "sample criterion; not a population threshold"
+  },
+  {
+    "mode": "full",
+    "minimum_tested_effective_H": null,
+    "evidence": null,
+    "interpretation": "sample criterion; not a population threshold"
+  },
+  {
+    "mode": "compressed",
+    "minimum_tested_effective_H": null,
+    "evidence": null,
+    "interpretation": "sample criterion; not a population threshold"
+  }
+]

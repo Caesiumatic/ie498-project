@@ -1,0 +1,4 @@
+parent,status,checkpoint_available,eligible
+formation-r1-h100-full,completed,True,False
+formation-r2-h100-full,completed,True,False
+formation-r3-h100-full,completed,True,False

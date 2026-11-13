@@ -4,6 +4,12 @@
 
 入口：[研究协议](docs/protocol.md)、[决策记录](docs/decisions.md)、[实验状态](docs/status.md)、[最终研究报告](reports/research_report.md)。所有数值结果均注明 mock、smoke、pilot 或 formation。用户已取消API预算上限；当前正式计划为每格3次，费用持续记账。
 
+## 已完成的结果
+
+正式45场（每格3次、每场300轮）和6个完整pilot已完成。正式样本中8/45满足有效超竞争标准，未识别满足80%样本成功率的最小H。三个正式H100/full parent均不合格，因此维护/冲击实证分支为0；实现和测试已提供。最终费用账本$32.19904462，22项测试及全数据审计通过。
+
+已有交付数据只需运行分析命令；下面的smoke/pilot命令用于新的、另行记录的实验版本。历史run ID与配置不匹配时程序会拒绝复用。恢复校验回执位于`reports/restore_verification.json`。
+
 ## 安装与密钥
 
 ```bash

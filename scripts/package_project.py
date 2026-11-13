@@ -22,6 +22,10 @@ def main():
         snap=snapshot(store,ROOT/'data/backups/batches')
         verified=ROOT/'data/restored'/snap.name
         restore(snap,verified)
+        receipt=ROOT/'reports/restore_verification.json'
+        atomic_json(receipt,{'snapshot':str(snap),'restored_to':str(verified),
+            'verified_files':len(json.loads((snap/'manifest.json').read_text())['files']),
+            'all_file_checksums_matched':True,'sqlite_integrity':'ok','independent_backup':False})
         bundle=ROOT/'reports/repository.bundle'
         subprocess.run(['git','bundle','create',str(bundle),'--all'],cwd=ROOT,check=True)
         tracked=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')
@@ -45,6 +49,7 @@ def main():
                 rel=str(path.relative_to(ROOT))
                 if path.is_file() and rel not in tracked:add(path,rel)
             if 'reports/repository.bundle' not in tracked:add(bundle,'reports/repository.bundle')
+            if 'reports/restore_verification.json' not in tracked:add(receipt,'reports/restore_verification.json')
             for path in snap.rglob('*'):
                 if path.is_file():add(path,'data/runs/live/'+str(path.relative_to(snap)))
             archive.writestr('ie498/DELIVERY_MANIFEST.json',json.dumps(checksums,indent=2))
