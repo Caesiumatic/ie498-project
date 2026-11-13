@@ -134,7 +134,7 @@ Each complete run is one independent observation; neither the two firms nor the 
     text+=table(reference,['id','repetition','status','rounds_completed','CI','effective_success','cost_usd'])
     text+='\nThe paper condition was added after viewing the original results. Its repeat labels 1–3 supply new independent observations, not retrospective changes to old trajectories. Comparisons are unpaired and potentially affected by execution-time or model-service differences. Five repeats still provide limited precision; neither a favorable example nor a condition ranking establishes stable behavior.\n'
     extension_interpretation=ROOT/'reports/extension_interpretation.md'
-    if len(primary)==75 and len(references)==5 and extension_interpretation.exists():
+    if len(primary)==75 and len(reference)==5 and extension_interpretation.exists():
         text+='\n'+extension_interpretation.read_text()+'\n'
     interpretation=ROOT/'reports/interpretation.md'
     if interpretation.exists():
