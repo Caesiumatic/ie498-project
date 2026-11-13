@@ -78,7 +78,7 @@ def main():
             if args.run:asyncio.run(run_batch(store,[args.child]))
             print(args.child);return
         if args.command=='resume':
-            ids=args.runs or [r['id'] for r in store.rows("SELECT id FROM runs WHERE status NOT IN ('completed','paused_protocol')")]
+            ids=args.runs or [r['id'] for r in store.rows("SELECT id FROM runs WHERE status NOT IN ('completed','paused_protocol','paused_budget_plan','paused_manual')")]
             asyncio.run(run_batch(store,ids,args.concurrency));return
         definitions=[]
         if args.command=='mock':

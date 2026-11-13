@@ -95,9 +95,17 @@ def analyze(store,destination):
         primary=df[df.eligible_primary]
         for (mode,h),g in primary.groupby(['mode','H']):
             k=int(g.effective_success.sum());n=len(g);lo,hi=wilson(k,n);cl,ch=bootstrap(g.CI)
-            groups.append(dict(mode=mode,H=int(h),n=n,successes=k,success_rate=k/n,wilson_low=lo,wilson_high=hi,
+            aggregate=dict(mode=mode,H=int(h),n=n,successes=k,success_rate=k/n,wilson_low=lo,wilson_high=hi,
                                mean_CI=float(g.CI.mean()),CI_bootstrap_low=cl,CI_bootstrap_high=ch,
-                               mean_price=float((g.price_0+g.price_1).mean()/2),mean_joint_profit=float(g.joint_profit.mean())))
+                               mean_price=float((g.price_0+g.price_1).mean()/2),mean_joint_profit=float(g.joint_profit.mean()))
+            for metric in ('price_0','price_1','profit_0','profit_1','joint_profit','price_std','price_gap'):
+                low,high=bootstrap(g[metric])
+                aggregate.update({f'{metric}_mean':float(g[metric].mean()),f'{metric}_bootstrap_low':low,f'{metric}_bootstrap_high':high})
+            for success in ('price_success','profit_success'):
+                successes=int(g[success].sum());low,high=wilson(successes,n)
+                aggregate.update({success+'_count':successes,success+'_rate':successes/n,
+                                  success+'_wilson_low':low,success+'_wilson_high':high})
+            groups.append(aggregate)
         for mode in ('clear','full','compressed'):
             eligible=[g for g in groups if g['mode']==mode and g['success_rate']>=.8]
             best=min(eligible,key=lambda g:g['H']) if eligible else None

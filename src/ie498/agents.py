@@ -2,6 +2,8 @@ import asyncio
 import json
 import os
 import random
+import time
+import re
 import httpx
 
 from .memory import digest, parse_output, tokens
@@ -12,6 +14,22 @@ class PermanentAPIError(RuntimeError):
     pass
 
 
+class RateLimiter:
+    """Shared admission pacing under the observed 2M-token/minute project tier."""
+    def __init__(self, tokens_per_second=30000, burst=200000):
+        self.rate=tokens_per_second;self.burst=burst;self.credit=burst
+        self.updated=time.monotonic();self.lock=asyncio.Lock()
+
+    async def acquire(self, estimate):
+        async with self.lock:
+            now=time.monotonic()
+            self.credit=min(self.burst,self.credit+(now-self.updated)*self.rate)
+            delay=max(0,(estimate-self.credit)/self.rate)
+            if delay:await asyncio.sleep(delay)
+            self.credit=max(0,self.credit+delay*self.rate-estimate)
+            self.updated=time.monotonic()
+
+
 def request_body(config, prompt, purpose):
     paper = config["architecture"] == "paper_reference" and purpose == "seller"
     body = {"model": config["model"], "messages": [{"role": "user", "content": prompt}],
@@ -19,6 +37,21 @@ def request_body(config, prompt, purpose):
             "reasoning_effort": config.get('reasoning_effort','low'), "store": False, "service_tier":"default"}
     if config.get('temperature') is not None:
         body['temperature']=config['temperature']
+    if config.get('cache_mode')=='explicit_prefix':
+        body['prompt_cache_options']={'mode':'explicit','ttl':'30m'}
+        # Text concatenates exactly to the original independent user message.
+        # Reuse only archive prefixes; never reuse sampled outputs or hidden reasoning.
+        eligible=purpose=='compressor' or (config['architecture']=='bullet_memory' and config['mode']=='full')
+        ends=[m.end() for m in re.finditer(r'(?m)^- [^\n]*',prompt)][-2:] if eligible else []
+        if ends:
+            parts=[];start=0
+            for end in ends:
+                parts.append({'type':'text','text':prompt[start:end],
+                              'prompt_cache_breakpoint':{'mode':'explicit'}})
+                start=end
+            if start<len(prompt):parts.append({'type':'text','text':prompt[start:]})
+            assert ''.join(p['text'] for p in parts)==prompt
+            body['messages'][0]['content']=parts
     if not paper:
         # One sentence, <=60 whitespace-delimited words; decimal points remain legal.
         word = r"(?:[^\s.!?]|\.[0-9])+"
@@ -46,6 +79,8 @@ class Caller:
         self.store = store
         self.sem = asyncio.Semaphore(concurrency)
         self.client = httpx.AsyncClient(timeout=httpx.Timeout(90, connect=20), follow_redirects=False)
+        self.not_before=0.0
+        self.limiter=RateLimiter()
 
     async def close(self):
         await self.client.aclose()
@@ -102,6 +137,10 @@ class Caller:
             row = dict(id=attempt_id, call_id=call_id, attempt=number, run_id=run,t=t,agent=agent,purpose=purpose,
                        request_hash=req_hash,request_json=json.dumps(body),reserved=reserve)
             async with self.sem:
+                if config['provider']=='openai':
+                    await self.limiter.acquire(len(json.dumps(body).encode())*.35+body['max_completion_tokens'])
+                if self.not_before>time.monotonic():
+                    await asyncio.sleep(self.not_before-time.monotonic())
                 self.store.reserve(row)
                 atomic_json(self.store.root / f"requests/{attempt_id}.json", body)
                 if config["provider"] == "mock":
@@ -120,6 +159,11 @@ class Caller:
                             raw = {"error": {"message": "Non-JSON HTTP response", "status": response.status_code}}
                         raw["http_status"] = response.status_code
                         raw["request_id"] = response.headers.get("x-request-id")
+                        raw['rate_limits']={k:v for k,v in response.headers.items() if k.startswith('x-ratelimit-')}
+                        if response.status_code==429:
+                            try:delay=float(response.headers.get('retry-after','60'))
+                            except ValueError:delay=60
+                            self.not_before=max(self.not_before,time.monotonic()+max(1,delay))
                     except httpx.HTTPError as exc:
                         raw = {"error": {"type": type(exc).__name__, "message": "Transport failure; billing uncertain"}}
                 atomic_json(self.store.root / f"raw/{attempt_id}.json", raw)

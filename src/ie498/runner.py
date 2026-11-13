@@ -46,6 +46,11 @@ async def run_one(store, caller, run, stop_event):
     try:
         history = store.history(run)
         for t in range(len(history)+1, c["T"]+1):
+            if (store.root/f'{run}.pause').exists():
+                store.status(run,'paused_manual','Pause marker found; round boundary preserved')
+                return
+            if prompt_hash()!=metadata['prompt_hash']:
+                raise ValueError('Prompt files changed during run; checkpoint preserved')
             if stop_event.is_set():
                 store.status(run,"paused_access","Batch stopped after permanent API failure")
                 return

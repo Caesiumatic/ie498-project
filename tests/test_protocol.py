@@ -137,6 +137,18 @@ def test_structured_sentence_constraint(config):
         assert not re.fullmatch(pattern,invalid)
 
 
+def test_cache_segmentation_does_not_change_information(config):
+    c=dict(config,mode='full',cache_mode='explicit_prefix')
+    prompt=build_seller(c,'', '- I will test $1.50.\n- I will next test $1.75.')
+    body=request_body(c,prompt,'seller')
+    parts=body['messages'][0]['content']
+    assert ''.join(p['text'] for p in parts)==prompt
+    assert sum('prompt_cache_breakpoint' in p for p in parts)==2
+    assert len(body['messages'])==1 and body['store'] is False
+    clear=request_body(dict(c,mode='clear'),build_seller(c,'',''),'seller')
+    assert isinstance(clear['messages'][0]['content'],str)
+
+
 def test_fork_metrics_backup_analysis(store,config,tmp_path):
     create_run(store,'parent',config);asyncio.run(run_batch(store,['parent']))
     c=dict(config,T=5,H=0,mode='clear',stage='shock',shock={'t':3,'agent':0,'factor':.9})

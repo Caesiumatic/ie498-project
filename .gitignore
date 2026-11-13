@@ -12,3 +12,7 @@ data/restored/
 *.egg-info/
 .cache/
 reports/mock/
+reports/*.bundle
+reports/interim/
+reports/live/rounds.csv
+reports/live/memory_audit.csv

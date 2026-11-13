@@ -1,0 +1,56 @@
+"""Create a portable delivery with a consistent DB snapshot and no credentials."""
+import hashlib
+import json
+import re
+from pathlib import Path
+import subprocess
+import sys
+import zipfile
+
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/'src'))
+from ie498.storage import Store, atomic_json
+from ie498.backup import snapshot, restore
+from ie498.runner import coordinator_lock
+
+
+def main():
+    store=Store(ROOT/'data/runs/live')
+    with coordinator_lock(store):
+        pending=store.rows("SELECT COUNT(*) n FROM api_attempts WHERE status='pending'")[0]['n']
+        if pending:raise ValueError('Reconcile interrupted requests before final packaging')
+        snap=snapshot(store,ROOT/'data/backups/live')
+        verified=ROOT/'data/restored'/snap.name
+        restore(snap,verified)
+        bundle=ROOT/'reports/repository.bundle'
+        subprocess.run(['git','bundle','create',str(bundle),'--all'],cwd=ROOT,check=True)
+        tracked=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')
+        dest=ROOT.parent/'IE498_project.zip'
+        checksums={}
+        with zipfile.ZipFile(dest,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
+            def add(path,name):
+                if Path(name).name=='.env' or Path(name).name.startswith('.env.') and Path(name).name!='.env.example':
+                    raise ValueError('Secret file cannot be packaged')
+                data=path.read_bytes()
+                if re.search(rb'sk-proj-[A-Za-z0-9_-]{32,}',data):
+                    raise ValueError(f'Possible secret in {name}')
+                archive.writestr('ie498/'+name,data)
+                checksums[name]=hashlib.sha256(data).hexdigest()
+            for rel in tracked:
+                if rel and (ROOT/rel).is_file():add(ROOT/rel,rel)
+            for path in (ROOT/'reports/live').rglob('*'):
+                rel=str(path.relative_to(ROOT))
+                if path.is_file() and rel not in tracked:add(path,rel)
+            if 'reports/repository.bundle' not in tracked:add(bundle,'reports/repository.bundle')
+            for path in snap.rglob('*'):
+                if path.is_file():add(path,'data/runs/live/'+str(path.relative_to(snap)))
+            archive.writestr('ie498/DELIVERY_MANIFEST.json',json.dumps(checksums,indent=2))
+        manifest={'archive':str(dest),'sha256':hashlib.sha256(dest.read_bytes()).hexdigest(),
+                  'snapshot':str(snap),'verified_restore':str(verified),'files':len(checksums),
+                  'credential_files_included':False,'independent_backup':False}
+        atomic_json(ROOT/'reports/delivery_manifest.json',manifest)
+        print(json.dumps(manifest,indent=2))
+    store.close()
+
+
+if __name__=='__main__':main()
