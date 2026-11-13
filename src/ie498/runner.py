@@ -16,7 +16,7 @@ def git_commit():
 
 
 def same_config(a,b):
-    """A global budget amendment does not mutate the scientific run settings."""
+    """Compare scientific settings while allowing a global budget amendment."""
     return {k:v for k,v in a.items() if k!='budget_usd'}=={k:v for k,v in b.items() if k!='budget_usd'}
 
 

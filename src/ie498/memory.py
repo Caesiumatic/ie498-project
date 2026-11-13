@@ -1,4 +1,4 @@
-"""Only this module exposes feedback to sellers; archives remain immutable."""
+"""Construct seller-visible feedback and memory views from immutable archives."""
 import hashlib
 import json
 import math
@@ -10,8 +10,8 @@ TOKEN_MEASURE = "utf8_byte_upper_bound"
 
 
 def tokens(text):
-    # Offline and conservative; provider usage is authoritative for billing.
-    # This resource measure is explicitly labelled, never represented as exact tokens.
+    # UTF-8 byte length is the offline token-count upper bound.
+    # Keep this estimate separate from provider-reported usage in the cost ledger.
     return len(text.encode('utf-8'))
 
 

@@ -1,12 +1,22 @@
 # IE498: Memory and Supracompetitive Pricing
 
-A resumable repeated Bertrand duopoly experiment using **GPT‑6 Luna** for all live agents. The study crosses market-history windows `H={0,1,5,20,100}` with `clear/full/compressed` strategic memory and separately implements the paper's P1 architecture as `paper_reference`.
+This experiment tests how visible market history and strategic memory shape pricing in repeated Bertrand duopoly. **GPT‑6 Luna** sellers compete across 15 conditions: history windows `H={0,1,5,20,100}` crossed with `clear/full/compressed` memory. A separate `paper_reference` condition implements the source paper's P1 architecture.
 
-Start with the [research protocol](docs/protocol.md), [decision log](docs/decisions.md), [experiment status](docs/status.md), and [final research report](reports/research_report.md). Results distinguish mock, smoke, pilot, and formation runs. The user removed the API spending cap and selected 3 independent repeats per condition; all costs remain recorded.
+The runner records each decision, memory view, settlement, and API cost, and resumes interrupted runs by logical call ID. Start with the [results](reports/research_report.md), [research protocol](docs/protocol.md), or [current status](docs/status.md); the [decision log](docs/decisions.md) records protocol choices.
 
 ## Completed results
 
-All 45 formal runs (3 per condition, 300 rounds each) and 6 complete pilots are finished. In the formal sample, 8/45 runs met the effective supracompetitive criterion. No minimum tested H met the 80% sample success threshold. None of the three formal H100/full parents qualified for maintenance/shock experiments, so no empirical intervention branches were run; the implementation and offline tests are included. The final cost ledger is $32.19904462. All 22 tests and the complete data audit passed.
+The completed matrix contains **45 formal runs and 13,500 rounds**, with 3 independent runs per condition and 300 rounds per run. Six completed pilots are reported separately.
+
+| Measure | Recorded result |
+| --- | --- |
+| Effective supracompetitive success | 8 of 45 formal runs |
+| Minimum effective history window | None of the tested windows met the 80% sample success threshold |
+| Maintenance/shock eligibility | 0 of 3 formal H100/full parents; no intervention branches executed |
+| Cost ledger | $32.19904462 |
+| Validation at delivery | 22 tests and the complete data audit passed |
+
+The intervention implementation and offline tests are included. Mock, smoke, pilot, and formal formation results retain separate labels and sample definitions.
 
 Use the analysis commands to recompute results from the delivered data. The smoke/pilot commands below are for new, separately documented experiment versions. The program rejects reuse of a historical run ID with a mismatched configuration. The full delivery archive includes `reports/restore_verification.json`.
 
@@ -48,7 +58,7 @@ uv run ie498 --data data/runs/live analyze --out reports/live
 uv run ie498 --data data/runs/live status
 ```
 
-Do not switch databases to bypass a project's budget accounting. The formal repeat count must match the frozen plan; each complete batch covers all 15 conditions. Repeating a stage or using `resume` reuses responses only for the same logical call.
+Keep live stages in the same database so the cost ledger covers the full experiment. The formal repeat count must match the frozen plan; each complete batch covers all 15 conditions. Repeating a stage or using `resume` reuses responses only for the same logical call.
 
 To pause an active run after its current round commits, create `data/runs/live/RUN_ID.pause`; remove it before resuming. Ctrl+C also interrupts execution, but requests processed by the server without a locally saved response are marked uncertain and conservatively charged at the reserved amount.
 
@@ -101,7 +111,7 @@ The Nash price is approximately 1.47293; the symmetric joint-profit optimum is a
 
 ## Delivery archive and source history
 
-The GitHub repository contains source, documentation, figures, and summary tables. The 343 MB raw-data archive could not be uploaded because GitHub's attachment endpoint rejected the available credentials; it remains at `/workspace/IE498_project.zip`. That original delivery archive predates the English documentation update.
+The GitHub repository contains source, documentation, figures, and summary tables. Raw-data recomputation requires the separate 343 MB delivery archive, recorded at `/workspace/IE498_project.zip` in the original delivery environment. The archive is not hosted on GitHub: its attachment upload failed authentication. That archive predates the English documentation update.
 
 The archive contains source, a consistent raw-data snapshot, analysis outputs, and `reports/repository.bundle`; it excludes credentials and the virtual environment. Its `DELIVERY_MANIFEST.json` lists per-file SHA‑256 hashes. An API key is not needed to analyze existing data.
 

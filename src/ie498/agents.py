@@ -41,8 +41,8 @@ def request_body(config, prompt, purpose):
         body['prompt_cache_options']={'mode':'explicit','ttl':'30m'}
     if config.get('cache_mode') in ('explicit_prefix','explicit_blocks'):
         body['prompt_cache_options']={'mode':'explicit','ttl':'30m'}
-        # Text concatenates exactly to the original independent user message.
-        # Reuse only archive prefixes; never reuse sampled outputs or hidden reasoning.
+        # Cache boundaries preserve the original user-message text byte for byte.
+        # Reuse archive prefixes only; sample outputs independently for new logical calls.
         eligible=purpose=='compressor' or (config['architecture']=='bullet_memory' and config['mode']=='full')
         ends=[m.end() for m in re.finditer(r'(?m)^- [^\n]*',prompt)] if eligible else []
         marked=ends[-2:]

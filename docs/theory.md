@@ -17,7 +17,7 @@ The code jointly solves both first-order conditions, then independently solves e
 
 Researchers use these formulas only for settlement and analysis. Agents do not know demand or the Nash/joint-optimal prices; they must explore through permitted feedback and their own textual strategies.
 
-The researcher observes 300 rounds, but sellers are not told the remaining horizon. No explicit discount factor is supplied, and the study does not solve all repeated-game equilibria. Static Nash and the joint optimum are numerical benchmarks; high prices and profits alone do not establish a particular repeated-game equilibrium.
+The researcher observes 300 rounds; sellers receive neither the remaining horizon nor an explicit discount factor. Static Nash and the joint optimum provide numerical benchmarks for realized prices and profits. The experiment measures pricing behavior against those benchmarks; it does not characterize the set of repeated-game equilibria or identify a particular equilibrium from high prices and profits alone.
 
 Memory design changes agents' visible state:
 
@@ -26,4 +26,4 @@ Memory design changes agents' visible state:
 - H≥1 supplies real feedback. Full archives may retain observations or judgments older than H, so raw history length and overall memory capacity are different concepts.
 - Compressed shortens only the seller's decision context. The external archive and compressor still use the full sequence; their resource costs are measured separately.
 
-The two firms, rounds within a run, and same-source states across branches are correlated. The independent formation unit is a complete run; for maintenance and shock, the source unit is the parent. One successful run can describe a formation path but cannot estimate success probability precisely. One failed run likewise cannot establish that a memory mechanism is universally ineffective.
+The two firms, rounds within a run, and same-source states across branches are correlated. Formation estimates therefore use complete runs as independent units; maintenance and shock comparisons group branches by parent. Individual trajectories describe formation paths, while success-rate estimates require independent runs and their uncertainty intervals.
