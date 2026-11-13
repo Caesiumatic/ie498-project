@@ -164,7 +164,9 @@ def _plots(store,runs,out,groups,df,b):
         ax.set(xlabel='History window H',title='Formation: mean run-level CI')
         for i in range(3):
             for j in range(len(pivot.columns)):
-                if not np.isnan(pivot.iloc[i,j]):ax.text(j,i,f'{pivot.iloc[i,j]:.2f}',ha='center',color='white')
+                if not np.isnan(pivot.iloc[i,j]):
+                    color='black' if image.norm(pivot.iloc[i,j])>.55 else 'white'
+                    ax.text(j,i,f'{pivot.iloc[i,j]:.2f}',ha='center',va='center',color=color)
         fig.colorbar(image,ax=ax,label='CI');fig.tight_layout();fig.savefig(out/'formation_heatmap.png',dpi=160);plt.close(fig)
         fig,ax=plt.subplots(figsize=(8,4))
         primary=df[df.eligible_primary]
