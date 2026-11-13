@@ -63,7 +63,7 @@ def main():
 
 ## 实验协议与可靠性
 
-市场参数 a1=a2=2、a0=0、mu=.25、c1=c2=1、alpha=1、beta=100。稳定softmax结算，保留完整价格精度，展示历史时四舍五入两位小数。计算所得Nash价格1.47292666、每家利润22.29266600；联合最优对称价格1.92498092、每家利润33.74904595。数值求解同时验证最佳回应；单产品monopoly使用独立的对应环境。
+本项目参数下，每轮需求为 `qᵢ = 100 exp((2−pᵢ)/0.25) / [1 + exp((2−p₁)/0.25) + exp((2−p₂)/0.25)]`，利润为 `πᵢ = (pᵢ−1)qᵢ`；分母中的1代表外部选项。市场参数 a1=a2=2、a0=0、mu=.25、c1=c2=1、alpha=1、beta=100。稳定softmax结算，保留完整价格精度，展示历史时四舍五入两位小数。计算所得Nash价格1.47292666、每家利润22.29266600；联合最优对称价格1.92498092、每家利润33.74904595。数值求解同时验证最佳回应；单产品monopoly使用独立的对应环境。
 
 卖家只读成本、$4.51文字ceiling、最近H轮允许的反馈和自身记忆，不读需求公式、研究条件、成功阈值或剩余轮数。H=0无市场反馈；此时full/compressed积累的是自生成策略，而不是环境观测。双方输入在本轮任一响应返回前固定；本轮bullet只能引用截至上一轮的结果。执行价冲击在双方提交后应用。
 
@@ -85,7 +85,7 @@ v1.0 pilot曾出现超过60词和多句话输出；失败样本未被清洗成�
     freeze=ROOT/'configs/formation-freeze.json'
     if freeze.exists():
         f=json.loads(freeze.read_text())
-        text+=f"\n正式协议冻结为每格{f['repeats']}个独立run；成本依据及预留见 configs/formation-freeze.json。所有pilot均不混入正式主矩阵。\n"
+        text+=f"\n正式协议冻结为每格{f['repeats']}个独立run；成本依据及预留见 configs/formation-freeze.json。所有pilot均不混入正式主矩阵；full-2/full-3在主矩阵后补完，属于冻结后的诊断数据，不参与模型或prompt选择。\n"
     else:text+='\n正式重复数尚未冻结。\n'
     text+='\n## Formation实际结果\n\n'
     if len(conditions):

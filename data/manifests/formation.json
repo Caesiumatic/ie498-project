@@ -35,8 +35,8 @@
     "transport_version": "stateless-single-message-no-cache-write-v1"
   },
   "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
-  "repeats": 5,
-  "desired_repeats": 5,
+  "repeats": 3,
+  "desired_repeats": 3,
   "estimated_batch_cost_usd": 8.5988149,
   "batch_cost_safety_factor": 1.2,
   "paper_cost_per_remaining_round": 0.003,
@@ -213,7 +213,51 @@
     "interim_results_already_seen": "Complete batch 1 and the ten completed clear/full runs in batch 2",
     "scope": "75 formation runs of 300 rounds; complete two previously planned full pilots; checkpoint-qualified interventions afterward"
   },
-  "code_commit": "4616d5166a8862b3548ab9c91c03f377c7c03858",
+  "three_repeat_user_amendment": {
+    "trigger": "Explicit user instruction: 三次够了",
+    "final_repeats": 3,
+    "budget_usd": null,
+    "cancelled_unstarted_runs": [
+      "formation-r4-h5-compressed",
+      "formation-r4-h100-clear",
+      "formation-r4-h0-compressed",
+      "formation-r4-h20-clear",
+      "formation-r4-h100-compressed",
+      "formation-r4-h0-clear",
+      "formation-r4-h1-clear",
+      "formation-r4-h20-full",
+      "formation-r4-h5-full",
+      "formation-r4-h20-compressed",
+      "formation-r4-h100-full",
+      "formation-r4-h0-full",
+      "formation-r4-h1-full",
+      "formation-r4-h5-clear",
+      "formation-r4-h1-compressed",
+      "formation-r5-h100-compressed",
+      "formation-r5-h0-full",
+      "formation-r5-h100-full",
+      "formation-r5-h1-clear",
+      "formation-r5-h1-compressed",
+      "formation-r5-h20-clear",
+      "formation-r5-h5-full",
+      "formation-r5-h20-full",
+      "formation-r5-h5-clear",
+      "formation-r5-h0-clear",
+      "formation-r5-h1-full",
+      "formation-r5-h20-compressed",
+      "formation-r5-h100-clear",
+      "formation-r5-h0-compressed",
+      "formation-r5-h5-compressed"
+    ],
+    "cancelled_run_cost_usd": 0,
+    "balance_at_change": {
+      "spent": 21.997005695000002,
+      "reserved": 0,
+      "budget": null
+    },
+    "behavior_based": false
+  },
+  "code_commit": "d3f74a327caa4bd332a55c0d73e3d2b13dc3f551",
   "runs": [
     {
       "repetition": 1,
@@ -484,186 +528,6 @@
       "H": 5,
       "mode": "compressed",
       "id": "formation-r3-h5-compressed"
-    },
-    {
-      "repetition": 4,
-      "H": 5,
-      "mode": "compressed",
-      "id": "formation-r4-h5-compressed"
-    },
-    {
-      "repetition": 4,
-      "H": 100,
-      "mode": "clear",
-      "id": "formation-r4-h100-clear"
-    },
-    {
-      "repetition": 4,
-      "H": 0,
-      "mode": "compressed",
-      "id": "formation-r4-h0-compressed"
-    },
-    {
-      "repetition": 4,
-      "H": 20,
-      "mode": "clear",
-      "id": "formation-r4-h20-clear"
-    },
-    {
-      "repetition": 4,
-      "H": 100,
-      "mode": "compressed",
-      "id": "formation-r4-h100-compressed"
-    },
-    {
-      "repetition": 4,
-      "H": 0,
-      "mode": "clear",
-      "id": "formation-r4-h0-clear"
-    },
-    {
-      "repetition": 4,
-      "H": 1,
-      "mode": "clear",
-      "id": "formation-r4-h1-clear"
-    },
-    {
-      "repetition": 4,
-      "H": 20,
-      "mode": "full",
-      "id": "formation-r4-h20-full"
-    },
-    {
-      "repetition": 4,
-      "H": 5,
-      "mode": "full",
-      "id": "formation-r4-h5-full"
-    },
-    {
-      "repetition": 4,
-      "H": 20,
-      "mode": "compressed",
-      "id": "formation-r4-h20-compressed"
-    },
-    {
-      "repetition": 4,
-      "H": 100,
-      "mode": "full",
-      "id": "formation-r4-h100-full"
-    },
-    {
-      "repetition": 4,
-      "H": 0,
-      "mode": "full",
-      "id": "formation-r4-h0-full"
-    },
-    {
-      "repetition": 4,
-      "H": 1,
-      "mode": "full",
-      "id": "formation-r4-h1-full"
-    },
-    {
-      "repetition": 4,
-      "H": 5,
-      "mode": "clear",
-      "id": "formation-r4-h5-clear"
-    },
-    {
-      "repetition": 4,
-      "H": 1,
-      "mode": "compressed",
-      "id": "formation-r4-h1-compressed"
-    },
-    {
-      "repetition": 5,
-      "H": 100,
-      "mode": "compressed",
-      "id": "formation-r5-h100-compressed"
-    },
-    {
-      "repetition": 5,
-      "H": 0,
-      "mode": "full",
-      "id": "formation-r5-h0-full"
-    },
-    {
-      "repetition": 5,
-      "H": 100,
-      "mode": "full",
-      "id": "formation-r5-h100-full"
-    },
-    {
-      "repetition": 5,
-      "H": 1,
-      "mode": "clear",
-      "id": "formation-r5-h1-clear"
-    },
-    {
-      "repetition": 5,
-      "H": 1,
-      "mode": "compressed",
-      "id": "formation-r5-h1-compressed"
-    },
-    {
-      "repetition": 5,
-      "H": 20,
-      "mode": "clear",
-      "id": "formation-r5-h20-clear"
-    },
-    {
-      "repetition": 5,
-      "H": 5,
-      "mode": "full",
-      "id": "formation-r5-h5-full"
-    },
-    {
-      "repetition": 5,
-      "H": 20,
-      "mode": "full",
-      "id": "formation-r5-h20-full"
-    },
-    {
-      "repetition": 5,
-      "H": 5,
-      "mode": "clear",
-      "id": "formation-r5-h5-clear"
-    },
-    {
-      "repetition": 5,
-      "H": 0,
-      "mode": "clear",
-      "id": "formation-r5-h0-clear"
-    },
-    {
-      "repetition": 5,
-      "H": 1,
-      "mode": "full",
-      "id": "formation-r5-h1-full"
-    },
-    {
-      "repetition": 5,
-      "H": 20,
-      "mode": "compressed",
-      "id": "formation-r5-h20-compressed"
-    },
-    {
-      "repetition": 5,
-      "H": 100,
-      "mode": "clear",
-      "id": "formation-r5-h100-clear"
-    },
-    {
-      "repetition": 5,
-      "H": 0,
-      "mode": "compressed",
-      "id": "formation-r5-h0-compressed"
-    },
-    {
-      "repetition": 5,
-      "H": 5,
-      "mode": "compressed",
-      "id": "formation-r5-h5-compressed"
     }
   ]
 }

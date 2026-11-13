@@ -46,7 +46,7 @@
     },
     {
       "id": "formation-r2-h5-compressed",
-      "status": "paused_manual"
+      "status": "completed"
     },
     {
       "id": "formation-r2-h100-clear",
@@ -61,7 +61,7 @@
       "status": "completed"
     }
   ],
-  "cost_usd": 8.4706059,
-  "snapshot": "/workspace/ie498/data/backups/batches/20261113T055510944513Z",
-  "code_commit": "4616d5166a8862b3548ab9c91c03f377c7c03858"
+  "cost_usd": 8.577281600000001,
+  "snapshot": "/workspace/ie498/data/backups/batches/20261113T055941697882Z",
+  "code_commit": "d3f74a327caa4bd332a55c0d73e3d2b13dc3f551"
 }

@@ -172,7 +172,11 @@ def _plots(store,runs,out,groups,df,b):
         primary=df[df.eligible_primary]
         for idx,mode in enumerate(['clear','full','compressed']):
             part=primary[primary['mode']==mode]
-            ax.scatter([list((0,1,5,20,100)).index(h)+(idx-1)*.15 for h in part.H],part.CI,label=mode,alpha=.75)
+            replicate=part.groupby('H').cumcount()
+            counts=part.groupby('H')['id'].transform('size')
+            positions=np.array([list((0,1,5,20,100)).index(h)+(idx-1)*.22 for h in part.H])
+            positions=positions+(replicate.to_numpy()-(counts.to_numpy()-1)/2)*.045
+            ax.scatter(positions,part.CI,label=mode,alpha=.75)
         ax.axhline(0,color='black',ls='--');ax.axhline(1,color='red',ls=':')
         ax.set_xticks(range(5),[0,1,5,20,100]);ax.set(xlabel='History window H',ylabel='Run-level CI');ax.legend()
         fig.tight_layout();fig.savefig(out/'run_points.png',dpi=160);plt.close(fig)
