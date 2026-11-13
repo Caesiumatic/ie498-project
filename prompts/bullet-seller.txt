@@ -20,5 +20,6 @@ on its own. This sentence will be appended unchanged to your private archive.
 Do not claim to have observed the outcome of the price you are now choosing.
 Return a JSON object with these fields in this order:
 "memory_bullet": one single-line sentence starting with "- ", ending with a period,
-and containing at most 60 English words;
+and containing at most 60 English words, preferably 25–45 words; use semicolons
+to connect clauses, do not write a second sentence, and avoid dotted abbreviations;
 "price": a finite nonnegative number.

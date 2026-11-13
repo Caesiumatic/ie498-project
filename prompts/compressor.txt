@@ -1,6 +1,8 @@
 Summarize the following private strategic-memory archive, ordered oldest to newest.
 Return only a JSON object with the field "memory_bullet": one self-contained English
 bullet sentence starting with "- ", ending with a period, at most 60 words, on one line.
+Aim for 25–45 words and select the most decision-relevant information rather than
+listing every observation; connect clauses with semicolons and avoid dotted abbreviations.
 Faithfully preserve the most important facts, numeric values, conditions, changing
 judgments, and strategies in the source. Where judgments conflict, preserve their
 change over time when relevant. Do not invent observations, infer unseen market
