@@ -1,8 +1,8 @@
-# IE498 实验结果
+# IE498 experiment results
 
-数据库包含 97 个计划 run，已完成 61 个；费用账本为 $32.199045，预算 无上限（用户授权）。
+The database contains 97 planned runs, of which 61 are completed. The cost ledger is $32.199045; budget: uncapped (user-authorized).
 
-真实实验、mock、smoke、pilot 分别标记；只有 completed 的 formation run 纳入主矩阵统计。每个完整双企业 run 是独立统计单位，单个 run 的轮次不是独立样本。
+Live experiments, mock, smoke, and pilot runs are labeled separately. Only completed formation runs enter the main matrix. Each complete duopoly run is an independent statistical unit; rounds within a run are not independent observations.
 
 | Mode | H | n | Success | Mean CI |
 |---|---:|---:|---:|---:|
@@ -22,6 +22,6 @@
 | full | 20 | 3 | 0/3 | -1.896 |
 | full | 100 | 3 | 0/3 | -1.276 |
 
-完整状态见 runs.csv；调用与资源见 resources.csv；数值基准见 benchmarks.json；成功率区间采用 Wilson，连续指标按 run bootstrap（n<2 不给区间）。
+See runs.csv for complete status, resources.csv for calls and resources, and benchmarks.json for numerical benchmarks. Success proportions use Wilson intervals; continuous metrics use run-level bootstrap intervals (none for n<2).
 
-已分析 0 个完成的子分支；配对分析见 paired.csv。
+Analyzed 0 completed child branches; see paired.csv for paired analysis.

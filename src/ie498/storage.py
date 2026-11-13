@@ -12,7 +12,7 @@ def remaining_budget(balance):
 
 
 def budget_label(balance):
-    return '无上限（用户授权）' if balance['budget'] is None else f"${balance['budget']:.2f}"
+    return 'uncapped (user-authorized)' if balance['budget'] is None else f"${balance['budget']:.2f}"
 
 
 def atomic_json(path, value):

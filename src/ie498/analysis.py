@@ -123,16 +123,16 @@ def analyze(store,destination):
     _plots(store,runs,out,groups,df,bench)
     paired=_paired(store,runs,out)
     complete=[r for r in summary if r['status']=='completed']
-    text='# IE498 实验结果\n\n'
-    text+=f"数据库包含 {len(runs)} 个计划 run，已完成 {len(complete)} 个；费用账本为 ${store.spending()['spent']:.6f}，预算 {budget_label(store.spending())}。\n\n"
-    text+='真实实验、mock、smoke、pilot 分别标记；只有 completed 的 formation run 纳入主矩阵统计。每个完整双企业 run 是独立统计单位，单个 run 的轮次不是独立样本。\n\n'
+    text='# IE498 experiment results\n\n'
+    text+=f"The database contains {len(runs)} planned runs, of which {len(complete)} are completed. The cost ledger is ${store.spending()['spent']:.6f}; budget: {budget_label(store.spending())}.\n\n"
+    text+='Live experiments, mock, smoke, and pilot runs are labeled separately. Only completed formation runs enter the main matrix. Each complete duopoly run is an independent statistical unit; rounds within a run are not independent observations.\n\n'
     if groups:
         text+='| Mode | H | n | Success | Mean CI |\n|---|---:|---:|---:|---:|\n'
         text+='\n'.join(f"| {g['mode']} | {g['H']} | {g['n']} | {g['successes']}/{g['n']} | {g['mean_CI']:.3f} |" for g in groups)+'\n\n'
     else:
-        text+='尚无可纳入主矩阵统计的真实 formation 结果；不能从 mock 或短 smoke 推断超竞争定价。\n\n'
-    text+='完整状态见 runs.csv；调用与资源见 resources.csv；数值基准见 benchmarks.json；成功率区间采用 Wilson，连续指标按 run bootstrap（n<2 不给区间）。\n\n'
-    text+=f'已分析 {len(paired)} 个完成的子分支；配对分析见 paired.csv。\n'
+        text+='No live formation results are eligible for the main matrix yet. Mock or short smoke runs cannot establish supracompetitive pricing.\n\n'
+    text+='See runs.csv for complete status, resources.csv for calls and resources, and benchmarks.json for numerical benchmarks. Success proportions use Wilson intervals; continuous metrics use run-level bootstrap intervals (none for n<2).\n\n'
+    text+=f'Analyzed {len(paired)} completed child branches; see paired.csv for paired analysis.\n'
     (out/'results.md').write_text(text)
     return summary
 

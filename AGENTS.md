@@ -1,11 +1,11 @@
-# IE498 项目规则
+# IE498 project rules
 
-- 中文解释；英文代码、seller/compressor prompts 与图表标签。
-- 用户已取消真实请求预算上限；正式矩阵固定每格3次，继续逐次记账；API key 仅用环境变量或被忽略的 `.env`。
-- 不改写历史 bullets；所有反馈经 `visible_history`；H=0 必须为空。
-- 同轮两家 seller 输入先固定再并发；结算与两条记忆在同一事务中提交。
-- 恢复使用逻辑调用 ID；新轮次相同 prompt 仍然采样；不能跨 run 复用输出。
-- 不静默修改模型、prompt、阈值或正式重复数；协议变化写入 docs/decisions.md。
-- 完整 run 是统计单位，分支按 parent 分组；mock 不能作为实证结果。
-- 常用：`uv sync --extra dev`、`uv run pytest -q`、`uv run ie498 --help`。
-- 原始数据与密钥不进 Git；备份用 SQLite backup API；恢复到新目录。
+- Communicate with the user in Chinese; write repository documentation, code, seller/compressor prompts, and chart labels in English. Preserve the original supplied specification and historical quotations as source evidence.
+- The user removed the API spending cap; the formal matrix is fixed at 3 repeats per condition. Continue accounting for every call. API keys belong only in environment variables or an ignored `.env`.
+- Never rewrite historical bullets. Route all feedback through `visible_history`; H=0 must be empty.
+- Fix both seller inputs before concurrent calls in a round; commit settlement and both memory entries in one transaction.
+- Resume by logical call ID. Sample again in a new round even for identical prompts; never reuse outputs across runs.
+- Do not silently change the model, prompts, thresholds, or formal repeat count. Record protocol changes in docs/decisions.md.
+- A complete run is the statistical unit; group branches by parent. Mock outputs are not empirical evidence.
+- Common commands: `uv sync --extra dev`, `uv run pytest -q`, `uv run ie498 --help`.
+- Keep raw data and credentials out of Git. Back up with the SQLite backup API and restore into a new directory.

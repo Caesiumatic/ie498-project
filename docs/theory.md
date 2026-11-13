@@ -1,29 +1,29 @@
-# 经济基准与记忆机制
+# Economic benchmarks and memory mechanisms
 
-记 `s_i=q_i/beta` 为产品i的份额，`s_0`为外部选项份额。Logit需求满足：
+Let `s_i=q_i/beta` denote product i's market share and `s_0` the outside-option share. Logit demand satisfies:
 
 \[
 \frac{\partial q_i}{\partial p_i}=-\frac{q_i(1-s_i)}{\alpha\mu},\qquad
 \frac{\partial q_j}{\partial p_i}=\frac{q_j s_i}{\alpha\mu}\quad(j\ne i).
 \]
 
-企业单独最优的一阶条件为
+A firm's individual first-order condition is
 
 \[
 1-\frac{p_i-\alpha c_i}{\alpha\mu}(1-s_i)=0.
 \]
 
-代码同时解两家的一阶条件，再独立求解各自的一维最佳回应，核验Nash价格确实互为最佳回应。联合利润最优则最大化两家利润之和；对称时一阶条件简化为 `p−alpha*c=alpha*mu/s_0`。这是控制两个差异化产品的联合最优，不是只存在一个产品的monopoly。
+The code jointly solves both first-order conditions, then independently solves each firm's one-dimensional best response to verify that Nash prices are mutual best responses. The joint optimum maximizes the sum of both profits; under symmetry, its first-order condition simplifies to `p−alpha*c=alpha*mu/s_0`. This is the joint optimum for two differentiated products under common control, not a single-product monopoly.
 
-研究者只在结算与分析层使用这些公式。代理不知道需求函数或Nash/联合最优价格，必须通过获准反馈和自身文字策略探索。
+Researchers use these formulas only for settlement and analysis. Agents do not know demand or the Nash/joint-optimal prices; they must explore through permitted feedback and their own textual strategies.
 
-本项目设置300轮的研究者观察期，但不告诉卖家剩余轮数。未给代理明确折现因子，也未求解重复博弈的所有均衡。因此静态Nash和联合最优是数值比较基准；观察到高价高利润不能单独证明代理实现了某个特定的重复博弈均衡。
+The researcher observes 300 rounds, but sellers are not told the remaining horizon. No explicit discount factor is supplied, and the study does not solve all repeated-game equilibria. Static Nash and the joint optimum are numerical benchmarks; high prices and profits alone do not establish a particular repeated-game equilibrium.
 
-记忆设计改变代理的可见状态：
+Memory design changes agents' visible state:
 
-- H=0/clear固定输入，每次重新采样，可作为静态模型先验对照。
-- H=0/full或compressed可以积累自己生成的计划，但没有市场反馈；这些计划不构成新的真实市场观测。
-- H≥1提供真实反馈；full档案可以保存比H更早的观测或判断，因此原始历史窗口与总体记忆容量不是同一个概念。
-- compressed只缩短seller的decision context；外部archive与压缩器仍读取完整序列，资源成本单独计量。
+- H=0/clear provides fixed inputs with fresh sampling, serving as a static model-prior control.
+- H=0/full or compressed can accumulate self-generated plans but receives no market feedback; those plans are not new market observations.
+- H≥1 supplies real feedback. Full archives may retain observations or judgments older than H, so raw history length and overall memory capacity are different concepts.
+- Compressed shortens only the seller's decision context. The external archive and compressor still use the full sequence; their resource costs are measured separately.
 
-同一run的两家企业、各轮价格以及不同分支中的同源状态均相关。Formation的独立单位是完整run；maintenance和shock的独立来源单位是parent。单个成功run可以描述一条形成路径，不能据此估计高精度的成功概率。单个失败run也不能证明某种记忆机制普遍无效。
+The two firms, rounds within a run, and same-source states across branches are correlated. The independent formation unit is a complete run; for maintenance and shock, the source unit is the parent. One successful run can describe a formation path but cannot estimate success probability precisely. One failed run likewise cannot establish that a memory mechanism is universally ineffective.

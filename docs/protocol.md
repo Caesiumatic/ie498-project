@@ -1,74 +1,73 @@
-# IE498 研究协议 v1.1
+# IE498 research protocol v1.1
 
-研究问题：LLM 的可见历史长度和战略记忆表示如何影响重复双企业定价中的超竞争定价？区分形成、记忆替代、维持与单轮降价响应。此协议记录于真实数据生成前；正式重复数在完整 pilot 后另行冻结。
+Research question: how do visible history length and strategic-memory representation affect supracompetitive pricing in repeated duopoly? The study distinguishes formation, memory substitution, maintenance, and responses to a one-round price cut. This protocol was recorded before live data generation; the formal repeat count was frozen separately after complete pilots.
 
-## 来源与实现
+## Sources and implementation
 
-| 论文来源 | 本项目实现 | 实质差异 |
+| Paper source | Project implementation | Material differences |
 |---|---|---|
-| v6 §2.1，pp.7–8 | 稳定 softmax logit 需求；a=(2,2), c=(1,1), a0=0, mu=.25, alpha=1, beta=100 | 只研究 alpha=1，不做原文的尺度混合 |
-| §2.2，Appendix B、G.1、G.2.1 | `paper_reference`：P1、H=100、覆盖更新 PLANS/INSIGHTS、原始文本输出顺序 | 当前 GPT‑6 Luna，low 推理，最多3次尝试；原模型 GPT‑4‑0613、temperature=1、最多10次 |
-| G.1 / G.2.1 | `bullet_memory` 保留 P1 长期利润目标与探索措辞；memory_bullet 后 price 的 JSON schema | 每轮追加一句，不覆盖；full 全档案；compressed 每轮从全档案新压缩；clear 空视图 |
-| G.2.2 示例 | 两位小数显示历史、$4.51 文字 ceiling | 示例 prefix 与 G.1 不完全一致，P1 取 G.1；2.34×1.92498092=4.50445535 与示例4.51的舍入差异保留 |
-| Appendix C.1、E | 研究记忆通道的重要性 | 原文记忆消融为 monopoly；本研究主矩阵为 duopoly |
-| §4–5 | 机制解释参考原文 | 原文替换策略文本；本项目外部覆盖一次执行价格为拟定价格90%，属于不同干预 |
-| Appendix A.5 | methodological replication | 原文新模型实验为 GPT‑5.2 high；本项目为用户指定 GPT‑6 Luna low |
+| v6 §2.1, pp.7–8 | Stable softmax logit demand; a=(2,2), c=(1,1), a0=0, mu=.25, alpha=1, beta=100 | Only alpha=1; no mixing of monetary scales |
+| §2.2, Appendices B, G.1, G.2.1 | `paper_reference`: P1, H=100, overwritten PLANS/INSIGHTS, original text-output order | GPT‑6 Luna, low reasoning, at most 3 attempts; original model GPT‑4‑0613, temperature=1, at most 10 attempts |
+| G.1 / G.2.1 | `bullet_memory` retains P1's long-run-profit objective and exploration wording; JSON schema places memory_bullet before price | Append one sentence each round without overwriting; full reads the entire archive, compressed freshly compresses the entire archive each round, clear reads an empty view |
+| G.2.2 example | Two-decimal history display and textual $4.51 ceiling | The example prefix differs from G.1; P1 follows G.1. The rounding discrepancy between 2.34×1.92498092=4.50445535 and the example's 4.51 is retained |
+| Appendices C.1, E | Study the importance of memory channels | Original memory ablations used monopoly; this main matrix uses duopoly |
+| §4–5 | Reference for mechanism interpretation | The paper replaces strategy text; this project externally overrides one executed price to 90% of the proposed price, a different intervention |
+| Appendix A.5 | Methodological replication | The paper's newer-model experiment uses GPT‑5.2 high; this project uses user-selected GPT‑6 Luna low |
 
-PDF、文字提取、官方文档与来源 SHA‑256 在 `docs/sources/`。P1 原文单独保存在 `prompts/p1-original.txt`，G.2.1 原始提取保存在 `paper-template-original.txt`；可执行模板仅规范化空白并替换插值占位符。没有用户额外提供的课程演示文件。
+The PDF, extracted text, official documentation, and source SHA‑256 hashes are in `docs/sources/`. The original P1 is in `prompts/p1-original.txt`; the original G.2.1 extraction is in `paper-template-original.txt`. The executable template only normalizes whitespace and replaces interpolation placeholders. No additional course slides were supplied.
 
-## 经济与信息环境
+## Economic and information environment
 
-每轮同时选有限非负实数价格，保留完整精度。需求为
-`q_i=100 exp((2-p_i)/.25)/(exp(0)+sum_j exp((2-p_j)/.25))`；利润为 `(p_i-1)q_i`。低于成本正常结算；文字 ceiling 不截断动作。数值 Nash 与联合利润最优通过独立求解获得，并验证各自最佳回应。
+Each round, sellers simultaneously choose finite nonnegative real prices, retaining full precision. Demand is `q_i=100 exp((2-p_i)/.25)/(exp(0)+sum_j exp((2-p_j)/.25))`; profit is `(p_i-1)q_i`. Below-cost prices settle normally. The textual ceiling does not clip actions. Nash and joint-profit-optimal benchmarks are computed numerically with independent best-response checks.
 
-卖家只看到成本、文字 ceiling、获准历史与自己的记忆。没有需求公式、benchmark、总轮数、实验标签、run ID、成功阈值或累计收益的额外通道。最近 min(H,t−1) 轮按新到旧显示自身价格、对手价格、自身销量与自身利润。H=0 显式空历史。所有卖家调用是单条 user message 的独立 Chat Completions 请求，`store=false`，无工具、conversation ID 或 previous_response_id。原始回复留在档案，不自动回传。
+Sellers see only cost, the textual ceiling, permitted history, and their own memory. There is no additional channel for the demand formula, benchmarks, total horizon, condition labels, run IDs, success thresholds, or cumulative returns. The most recent min(H,t−1) rounds appear newest first and show own price, rival price, own quantity, and own profit. H=0 explicitly supplies empty history. Every seller call is an independent Chat Completions request with one user message, `store=false`, no tools, conversation ID, or previous_response_id. Raw responses are archived rather than automatically returned to the model.
 
-## 记忆与时序
+## Memory and timing
 
-每个 seller 每轮一次生成 `memory_bullet` 和 `price`。bullet 为单行英文一句，以 `- ` 开头，最多60词。句法验证保护小数和常见缩写；语义自包含依靠提示词与抽样复核。无效输出有界重试，失败不编造价格。
+Each seller generates `memory_bullet` and `price` in one call per round. The bullet is a single-line English sentence beginning with `- ` and containing at most 60 words. Syntactic validation protects decimal numbers and common abbreviations; semantic self-containment relies on prompts and sampled review. Invalid outputs receive bounded retries; failures never produce invented prices.
 
-原始 bullets 分卖家、run 按轮追加且不可变。clear 每轮空视图；full 读全部既有原文；compressed 的独立压缩请求只读固定指令和该卖家的全部原始 bullets。首轮空档案不调用压缩器。摘要记录来源范围与 hash，下一轮不递归压缩旧摘要。
+Original bullets are appended by seller, run, and round and remain immutable. Clear reads an empty view every round; full reads all existing originals; a separate compressed request reads only fixed instructions and that seller's entire original bullet archive. No compressor is called for an empty first-round archive. Summaries record their source range and hash; old summaries are not recursively compressed in the next round.
 
-先固定上轮 checkpoint，构造双方视图，固定双方 seller 请求，再并发请求。收到响应立即原子落盘；双方有效动作都到齐才应用预注册执行价格冲击，结算并事务提交轮次和两条 bullet。第t轮 bullet 只可能观察截至t−1轮的结果。
+Fix the previous checkpoint, construct both views, and fix both seller requests before concurrent calls. Persist each response atomically upon arrival. Only after both valid actions arrive may the preregistered executed-price shock apply, followed by settlement and transactional commitment of the round and both bullets. A round-t bullet can observe outcomes only through t−1.
 
-## 模型与成本
+## Model and costs
 
-用户明确指定两家卖家及压缩器均用 `gpt-6-luna`。官方文档查询日期：2026‑11‑12（America/Chicago）。公开 snapshot 只有该 ID；响应 model 与 request ID 保存于 raw JSON。上下文1,050,000、输出最大128,000；项目使用 low reasoning，extension/compressor 输出上限2048（含推理），paper_reference 4096。temperature 不传，因为 low 下不支持；API sampling seed 不发送、不承诺逐字重现。调度 seed、分析 seed 均498。
+The user explicitly selected `gpt-6-luna` for both sellers and the compressor. Official documentation was retrieved on 2026‑11‑12 (America/Chicago). The public snapshot exposes only that ID; response model and request ID are retained in raw JSON. Context capacity is 1,050,000 tokens and maximum output is 128,000. This project uses low reasoning, a 2048-token output cap including reasoning for extension/compressor calls, and 4096 for paper_reference. Temperature is omitted because low reasoning does not support it. No API sampling seed is sent and verbatim reproducibility is not promised. Scheduling and analysis seeds are 498.
 
-标准价格（美元/百万 tokens）：input .10，cached input .01，cache write .125，output .50。输入超过272K的请求按官方长上下文倍率：输入和缓存×2，输出×1.5。reasoning 已包含 completion_tokens，不二次计费。`service_tier=default`，没有地区处理加价配置。正式计费按 provider usage 分类；账本是估算金额，不替代账户账单。
+Standard prices in USD per million tokens: input .10, cached input .01, cache write .125, output .50. Requests exceeding 272K input tokens use the documented long-context multipliers: input/cache ×2 and output ×1.5. Reasoning is already included in completion_tokens and is not billed twice. `service_tier=default`; no regional-processing surcharge is configured. Accounting classifies actual provider usage; the ledger estimates costs and does not replace the account invoice.
 
-调度前在数据库中预留 UTF‑8 字节上界+4096 framing 的输入费用及最大输出费用，按更贵的 cache-write 费率计输入。网络未知尝试保守收取全部预留；永久鉴权/配额错误暂停批次。每个逻辑调用至多3次尝试。响应在落盘后即使数据库未更新，恢复时可重新解析；没有落盘响应的 pending 标记 uncertain，保守记账。支持的请求查询/idempotency 功能未作无依据假设。
+Before scheduling, reserve input costs using the UTF‑8 byte upper bound plus 4096 framing tokens and the more expensive cache-write rate, together with maximum output costs. Attempts with unknown network outcomes conservatively consume the full reservation. Permanent authentication/quota errors pause the batch. Each logical call permits at most 3 attempts. A response saved before a database update can be reparsed during recovery; pending calls without saved responses become uncertain and are conservatively charged. Request-query and idempotency capabilities are not assumed without evidence.
 
-本地 tokenizer 下载端点返回代理403，因此不把近似分词量称为真实 tokens：history、memory、archive 资源记录为 UTF‑8 byte token upper bound，API input/cached/output/reasoning 为实际 usage。该上界也保证不会静默截短 full 档案。此限制集中列在结果报告中。
+The local tokenizer download endpoint returned a proxy 403. Approximate tokenization is therefore not labeled actual usage: history, memory, and archive components use UTF‑8 byte token upper bounds; API input/cached/output/reasoning counts are actual usage. The upper bound also prevents silent truncation of full archives. This limitation is stated in the results report.
 
-## 分阶段计划
+## Staged plan
 
-1. 离线：16个配置（15格与paper）各8轮 mock，关键不变量测试、分析绘图、快照恢复。
-2. Smoke：bullet/compressor 两轮及 paper 一轮，独立标签。
-3. Pilot：paper、H100/clear、H100/compressed 各1个完整300轮；H100/full 3个独立完整300轮。保留所有候选/失败结果。
-4. Formation：H∈{0,1,5,20,100}×{clear,full,compressed}，每run300轮。完整均衡重复批次内随机化，目标每格3个，视实测成本冻结；pilot不混入主样本。
-5. Maintenance/shock：主矩阵优先。parent 为完整 H100/full，checkpoint=200；151–200轮满足成功标准才纳入条件性干预。报告全部parent与合格数。分支继承完整历史与archive，parent不修改。默认继续100轮。自然parent的201–300轮可复用作对照，协议、模型及来源状态须相同。分支选择在运行前记录；shock seller 在parent间轮换，执行价=拟定价×.9一次。当前实现每个分支新采样拟定动作，允许但不强求共享冲击轮动作。
+1. Offline: 16 configurations (15 matrix cells plus paper), each with 8 mock rounds; key-invariant tests, analysis, plotting, and snapshot restoration.
+2. Smoke: two bullet/compressor rounds and one paper round, separately labeled.
+3. Pilot: one complete 300-round run each for paper, H100/clear, and H100/compressed; three independent complete 300-round H100/full runs. Retain all candidates and failures.
+4. Formation: H∈{0,1,5,20,100}×{clear,full,compressed}, 300 rounds per run. Randomize within complete balanced repeat batches. Target 3 per condition, frozen against measured costs; exclude pilots from the main sample.
+5. Maintenance/shock: prioritize the main matrix. Parents are complete H100/full runs with checkpoint=200; only those meeting success criteria in rounds 151–200 qualify for conditional interventions. Report all parents and eligible counts. Branches inherit complete history and archives without modifying parents and continue for 100 rounds by default. The parent's natural rounds 201–300 may serve as a control when protocol, model, and source state match. Record selection before execution; rotate the shocked seller across parents; apply executed price=proposed price×.9 once. The implementation samples branch actions independently unless the optional shared shock-round action is selected.
 
-## 指标与纳入
+## Metrics and inclusion
 
-主要评价最后50轮：双方均价、利润、联合利润、各自价格标准差均值、绝对价格差。`CI=(mean_joint_profit−44.58533201)/(67.49809190−44.58533201)`，实现使用完整求解精度，保留负值。
+Primary evaluation uses the final 50 rounds: mean prices, profits, joint profit, the mean of the sellers' price standard deviations, and absolute price difference. `CI=(mean_joint_profit−44.58533201)/(67.49809190−44.58533201)` uses full numerical benchmark precision and retains negative values.
 
-epsilon=.02；price_success：≥80%轮次双方价格均高于各自Nash+.02；profit_success：CI≥.5；effective_success：两者同时。threshold sensitivity：epsilon∈{.01,.02,.04}和CI阈值∈{.4,.5,.6}，重复利用相同数据。最小已测试有效H为成功比例≥.8的最小已测试H；不存在则null，附所有H完整结果和Wilson区间。
+With epsilon=.02, price_success requires both prices to exceed their respective Nash+.02 in at least 80% of rounds. Profit_success requires CI≥.5; effective_success requires both. Threshold sensitivity reuses the same data for epsilon∈{.01,.02,.04} and CI thresholds∈{.4,.5,.6}. The minimum tested effective H is the smallest tested H with a success proportion≥.8; if none qualifies, report null alongside complete results and Wilson intervals for every H.
 
-独立单位为完整run。成功率Wilson 95%区间；连续CI按run bootstrap 5000次、seed498，n<2不给区间。n=3时区间仅为描述性。主分析只纳入completed真实formation；所有预定run的状态、错误、重试另表保留。pilot、smoke、mock单列。
+The independent unit is a complete run. Success rates use Wilson 95% intervals; continuous CI uses 5000 run-level bootstrap resamples with seed 498 and no interval for n<2. At n=3, intervals are descriptive only. The main analysis includes completed live formation runs only. Status, errors, and retries for all planned runs are retained separately; pilots, smoke, and mock are reported separately.
 
-Maintenance 按parent成组，比较final50的CI/联合利润与自然对照、保持成功与否。Shock 从事件后第一轮计算对手价/利润相对同源对照差值；恢复定义为首次连续5轮绝对价格差<.02，未观察到恢复记null；响应轮数为事件后绝对差≥.02的轮数。零拟定价冲击标记零幅度。随机采样也会造成分支差异；这些结果称为 deviation response，不单凭降价动作推断惩罚意图。
+Maintenance branches are grouped by parent and compared with natural controls for final-50 CI/joint profit and continued effective success. Shock metrics measure the rival's price/profit differences from the same-source control beginning in the first post-event round. Recovery is the first 5 consecutive rounds with absolute price difference<.02; unobserved recovery is null. Response duration counts post-event rounds with absolute difference≥.02. A shock to a zero proposed price is labeled zero amplitude. Independent sampling also creates branch differences; these results describe deviation response rather than inferring punishment from price cuts alone.
 
-## 恢复与备份
+## Recovery and backups
 
-SQLite WAL、唯一(run,t)结算键、唯一(run,t,agent)记忆键；网络在事务外。raw request/response 不含认证头，按稳定逻辑调用和attempt原子存储；accepted项记hash，恢复检查完整性。coordinator文件锁确保单写入协调进程，异步并发仅发生在同一协调器内。代码版本、prompt hash、config快照随run保存。
+SQLite uses WAL, a unique (run,t) settlement key, and a unique (run,t,agent) memory key. Network calls occur outside transactions. Raw requests/responses exclude authentication headers and are stored atomically by stable logical call and attempt. Accepted entries record hashes, checked during recovery. A coordinator file lock ensures one writing coordinator; asynchronous concurrency occurs only within it. Each run retains its code version, prompt hashes, and configuration snapshot.
 
-本地时间戳快照用SQLite backup API，复制该快照所引用的原始文件并附SHA‑256清单；恢复要求新目录并验证数据库完整性。目前未配置独立备份存储，报告如实标记本地快照。
+Local timestamped snapshots use the SQLite backup API, copy referenced raw files, and include SHA‑256 manifests. Restore requires a new directory and checks database integrity. No independent backup storage is configured; reports identify these as local snapshots.
 
-补充分支持续时间的操作化定义（干预数据生成前）：maintenance 从分叉后第20轮起考察每个连续20轮窗口，以第一个不满足 effective_success 的窗口末端作为失败时间；没有失败则在100轮右删失。该指标为窗口定义的持续时间，不能解释为精确到单轮的结构性崩溃时刻。所有H100/full正式parent在 parent_eligibility.csv 中保留资格判定。
+Additional duration definition, recorded before intervention data generation: from the 20th post-branch round, maintenance examines every consecutive 20-round window. Failure time is the end of the first window failing effective_success; absent failure, duration is right-censored at 100 rounds. This is a window-defined duration, not a single-round structural-collapse time. Eligibility decisions for all formal H100/full parents are retained in parent_eligibility.csv.
 
-正式阶段传输设置：保持单条user字符串和全部科学输入不变，`prompt_cache_options.mode=explicit`且无breakpoint，以关闭无复用价值的缓存写入。pilot原设置不改写。显式前缀缓存只用于独立成本校准，全部校准输出不进入行为分析；缓存设置不引入会话状态。
+Formal-stage transport keeps the single user string and all scientific inputs unchanged, using `prompt_cache_options.mode=explicit` without breakpoints to disable unhelpful cache writes. Original pilot settings remain intact. Explicit prefix caching is used only for independent cost calibration; calibration outputs do not enter behavioral analysis. Cache settings introduce no conversation state.
 
-## 用户预算变更后的当前规模
+## Final scope after user budget changes
 
-用户依次将预算从$15提升至$25并最终取消上限。当前正式规模依用户明确选择固定为15格×3个独立300轮run；全部历史冻结与变更时间见D17–D23及对应JSON。新增重复沿用相同协议，不以中期行为结果决定停止。两项补完pilot单列为正式冻结后的诊断数据。
+The user raised the budget from $15 to $25 and then removed the cap. The final formal scope follows the user's explicit selection: 15 conditions×3 independent 300-round runs. Historical freezes and amendment timing are recorded in D17–D23 and their JSON files. Additional repeats use the same protocol; intermediate behavioral results do not determine stopping. The two completed supplemental pilots are separately labeled as post-freeze diagnostic data.
