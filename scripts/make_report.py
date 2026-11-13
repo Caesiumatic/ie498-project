@@ -99,19 +99,38 @@ v1.0 pilot曾出现超过60词和多句话输出；失败样本未被清洗成�
     else:text+='没有可纳入主分析的完成formation run；不使用mock或短smoke替代实证结果。\n'
     text+='\n最小已测试有效H及其完整依据：\n\n'
     for row in json.loads((out/'minimum_tested_effective_H.json').read_text()):
-        h=row['minimum_tested_effective_H'];text+=f"- {row['mode']}：{h if h is not None else '在当前网格和样本中尚未识别'}。\n"
+        h=row['minimum_tested_effective_H'];e=row['evidence']
+        if e:
+            text+=f"- {row['mode']}：H={h}；{e['successes']}/{e['n']}成功，Wilson 95%区间[{e['wilson_low']:.3f}, {e['wilson_high']:.3f}]。\n"
+        else:text+=f"- {row['mode']}：在当前网格和样本中尚未识别。\n
     text+='\n## Maintenance与deviation response\n\n'
     eligible=read_csv(out/'parent_eligibility.csv');paired=read_csv(out/'paired.csv')
     if len(eligible):text+=f"H100/full正式parent共{len(eligible)}个，其中{int(eligible.eligible.sum())}个在151–200轮满足有效成功标准。\n\n"
     if len(paired):
         text+=table(paired,['parent','child','stage','H','mode','eligible_parent','delta_CI','delta_joint_profit','effective_success'])
         text+='\n共享parent的分支按parent聚合。自然延续作为对照，执行冲击为一次拟定价×.9。响应指标从下一轮起测量；相对对照的动态差异包含后续独立模型采样噪声，不能单凭降价断言惩罚意图。\n'
+        maintenance=paired[paired.stage=='maintenance']
+        if len(maintenance):
+            text+='\n维持时长以首次不满足标准的20轮滚动窗口结束位置计（相对分叉起点）；未出现则右删失：\n\n'
+            text+=table(maintenance,['child','first_failed_20_round_window_end','survival_censored','followup_rounds'])
+        shock=paired[paired.stage=='shock']
+        if len(shock):
+            text+='\n响应持续性使用与自然延续的价格差绝对值≥.02的后续轮数；恢复时间为首次连续5轮价格差<.02的起点：\n\n'
+            text+=table(shock,['child','first_opponent_price_delta','response_rounds','recovery_time','zero_shock'])
         if (out/'shock_response.png').exists():text+='\n![Deviation response](live/shock_response.png)\n'
     else:
-        text+='尚无完成并可配对的maintenance/shock数据；不把已实现的分叉功能写成已完成的干预实验。具体未执行原因见最终状态记录。\n'
+        intervention_plan=ROOT/'configs/interventions-freeze.json'
+        if intervention_plan.exists():
+            ip=json.loads(intervention_plan.read_text());n_eligible=sum(r['eligible'] for r in ip['candidates'])
+            text+=f'干预筛选共{len(ip["candidates"])}个parent，{n_eligible}个符合标准；按预算选中{sum(r["selected"] for r in ip["candidates"])}个。没有可报告的完成分支，具体筛选与预算理由保存在configs/interventions-freeze.json。\n'
+        else:text+='尚无完成并可配对的maintenance/shock数据；具体未执行原因见最终状态记录。\n'
     text+='\n## 资源与实际费用\n\n'
     bystage=costs.groupby('stage',as_index=False)[['calls','input_tokens','cached_input_tokens','output_tokens','reasoning_tokens','cost_usd']].sum()
     text+=table(bystage,list(bystage.columns))
+    if len(primary):
+        bymode=costs.merge(primary[['id','mode']],left_on='run',right_on='id').groupby('mode',as_index=False)[['calls','cost_usd','compressor_input_tokens','final_archive_bytes','max_visible_memory_words']].mean()
+        text+='\n正式实验按记忆模式汇总的每run平均资源（包含全部H）：\n\n'
+        text+=table(bymode,list(bymode.columns))
     text+=f'''\n总账本${spending['spent']:.6f}，尚有${spending['budget']-spending['spent']:.6f}预算空间（不代表账户余额）。未知服务端处理的尝试按预留上界计入，不把估算冒充发票。推理tokens已含于输出tokens，不重复收费。
 
 压缩条件减少seller读取的记忆文本，但仍维护完整原始archive，并为每轮重读全档案支付压缩费用。因此结论只涉及decision-context compression，不能称为整个系统只需要一句记忆。history/memory/archive分量以UTF‑8字节保守上界记录，真实API tokens按usage统计；tokenizer端点在当前环境被拒绝访问，此处不报告虚构的精确分词量。
