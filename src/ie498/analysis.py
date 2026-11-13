@@ -194,7 +194,7 @@ def _paired(store,runs,out):
         eligible=metrics(parent[max(0,checkpoint-50):checkpoint]).get('effective_success',False)
         if len(baseline)!=len(follow) or not follow:continue
         a=metrics(follow);b=metrics(baseline)
-        pairs.append(dict(parent=run['parent'],child=run['id'],stage=c['stage'],eligible_parent=eligible,
+        pairs.append(dict(parent=run['parent'],child=run['id'],stage=c['stage'],H=c['H'],mode=c['mode'],eligible_parent=eligible,
                           delta_CI=a['CI']-b['CI'],delta_joint_profit=a['joint_profit']-b['joint_profit'],
                           effective_success=a['effective_success']))
         if c['stage']=='maintenance':
@@ -218,7 +218,18 @@ def _paired(store,runs,out):
     # Aggregate within parent before summarizing independent parent units.
     if pairs:
         p=pd.DataFrame(pairs)
-        p.groupby(['parent','stage'],as_index=False)[['delta_CI','delta_joint_profit']].mean().to_csv(out/'parent_groups.csv',index=False)
+        if 'zero_shock' in p:
+            zeros=p.zero_shock.fillna(False).astype(bool)
+            p[zeros].to_csv(out/'zero_amplitude_shocks.csv',index=False)
+            p=p[~zeros]
+        grouped=p.groupby(['parent','stage','H','mode'],as_index=False)[['delta_CI','delta_joint_profit']].mean()
+        grouped.to_csv(out/'parent_groups.csv',index=False)
+        condition_rows=[]
+        for (stage,h,mode),group in grouped.groupby(['stage','H','mode']):
+            low,high=bootstrap(group.delta_CI)
+            condition_rows.append(dict(stage=stage,H=int(h),mode=mode,n_parents=len(group),
+                                       mean_delta_CI=float(group.delta_CI.mean()),bootstrap_low=low,bootstrap_high=high))
+        pd.DataFrame(condition_rows).to_csv(out/'paired_conditions.csv',index=False)
     if events:
         e=pd.DataFrame(events);fig,ax=plt.subplots(figsize=(8,4))
         grouped=e.groupby(['parent','event_time']).opponent_price_delta.mean().reset_index()

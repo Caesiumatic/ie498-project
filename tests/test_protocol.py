@@ -152,7 +152,7 @@ def test_cache_segmentation_does_not_change_information(config,cache_mode):
 
 def test_fork_metrics_backup_analysis(store,config,tmp_path):
     create_run(store,'parent',config);asyncio.run(run_batch(store,['parent']))
-    c=dict(config,T=5,H=0,mode='clear',stage='shock',shock={'t':3,'agent':0,'factor':.9})
+    c=dict(config,T=4,H=0,mode='clear',stage='shock',shock={'t':3,'agent':0,'factor':.9})
     store.fork('parent','child',2,c,git_commit(),prompt_hash());asyncio.run(run_batch(store,['child']))
     hist=store.history('child');assert hist[:2]==store.history('parent')[:2]
     assert hist[2]['prices'][0]==hist[2]['proposed_prices'][0]*.9
@@ -164,8 +164,11 @@ def test_fork_metrics_backup_analysis(store,config,tmp_path):
     assert result['CI']==pytest.approx(1) and result['effective_success']
     assert wilson(0,3)[0]==0
     backup=snapshot(store,tmp_path/'backups');restored=restore(backup,tmp_path/'restored')
-    db=sqlite3.connect(restored/'experiments.sqlite');assert db.execute('SELECT COUNT(*) FROM rounds').fetchone()[0]==9;db.close()
+    db=sqlite3.connect(restored/'experiments.sqlite');assert db.execute('SELECT COUNT(*) FROM rounds').fetchone()[0]==8;db.close()
     analyze(store,tmp_path/'report');assert (tmp_path/'report/trajectories/child.png').exists()
+    import pandas as pd
+    pairs=pd.read_csv(tmp_path/'report/paired_conditions.csv')
+    assert pairs.iloc[0]['n_parents']==1 and pairs.iloc[0]['H']==0 and pairs.iloc[0]['mode']=='clear'
 
 
 def test_balanced_plan():

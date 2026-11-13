@@ -104,7 +104,7 @@ v1.0 pilot曾出现超过60词和多句话输出；失败样本未被清洗成�
     eligible=read_csv(out/'parent_eligibility.csv');paired=read_csv(out/'paired.csv')
     if len(eligible):text+=f"H100/full正式parent共{len(eligible)}个，其中{int(eligible.eligible.sum())}个在151–200轮满足有效成功标准。\n\n"
     if len(paired):
-        text+=table(paired,['parent','child','stage','eligible_parent','delta_CI','delta_joint_profit','effective_success'])
+        text+=table(paired,['parent','child','stage','H','mode','eligible_parent','delta_CI','delta_joint_profit','effective_success'])
         text+='\n共享parent的分支按parent聚合。自然延续作为对照，执行冲击为一次拟定价×.9。响应指标从下一轮起测量；相对对照的动态差异包含后续独立模型采样噪声，不能单凭降价断言惩罚意图。\n'
         if (out/'shock_response.png').exists():text+='\n![Deviation response](live/shock_response.png)\n'
     else:
