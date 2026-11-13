@@ -1,89 +1,65 @@
 {
-  "observed_at_utc": "2026-11-13T19:04:23.965027+00:00",
+  "observed_at_utc": "2026-11-13T23:11:47.028726+00:00",
   "all_completed": false,
   "extension_runs": 35,
   "by_architecture": {
     "bullet_memory": {
       "runs": 30,
-      "completed": 0,
-      "rounds_done": 6120,
+      "completed": 27,
+      "rounds_done": 8961,
       "rounds_target": 9000,
-      "round_min": 113,
-      "round_max": 274,
+      "round_min": 276,
+      "round_max": 300,
       "statuses": {
-        "paused_access": 30
+        "paused_access": 3,
+        "completed": 27
       }
     },
     "paper_reference": {
       "runs": 5,
-      "completed": 0,
-      "rounds_done": 958,
+      "completed": 5,
+      "rounds_done": 1500,
       "rounds_target": 1500,
-      "round_min": 181,
-      "round_max": 206,
+      "round_min": 300,
+      "round_max": 300,
       "statuses": {
-        "paused_access": 5
+        "completed": 5
       }
     }
   },
   "runs_with_errors": [
-    "formation-paper-r1-h100",
-    "formation-paper-r2-h100",
-    "formation-paper-r3-h100",
-    "formation-paper-r4-h100",
-    "formation-paper-r5-h100",
-    "formation-r4-h0-clear",
-    "formation-r4-h0-compressed",
-    "formation-r4-h0-full",
-    "formation-r4-h1-clear",
-    "formation-r4-h1-compressed",
-    "formation-r4-h1-full",
-    "formation-r4-h100-clear",
     "formation-r4-h100-compressed",
-    "formation-r4-h100-full",
-    "formation-r4-h20-clear",
-    "formation-r4-h20-compressed",
-    "formation-r4-h20-full",
-    "formation-r4-h5-clear",
     "formation-r4-h5-compressed",
-    "formation-r4-h5-full",
-    "formation-r5-h0-clear",
-    "formation-r5-h0-compressed",
-    "formation-r5-h0-full",
-    "formation-r5-h1-clear",
-    "formation-r5-h1-compressed",
-    "formation-r5-h1-full",
-    "formation-r5-h100-clear",
-    "formation-r5-h100-compressed",
-    "formation-r5-h100-full",
-    "formation-r5-h20-clear",
-    "formation-r5-h20-compressed",
-    "formation-r5-h20-full",
-    "formation-r5-h5-clear",
-    "formation-r5-h5-compressed",
-    "formation-r5-h5-full"
+    "formation-r5-h100-compressed"
   ],
   "attempt_statuses": {
-    "accepted": 16677,
+    "accepted": 26827,
     "invalid": 1,
-    "failed": 85
+    "failed": 252
   },
   "http_error_counts": {
-    "429": 85
+    "429": 226
   },
-  "http_429_count": 85,
+  "http_429_count": 226,
   "starting_ledger_usd": 32.19904462,
   "ledger_spent_usd": 42.15208822,
   "ledger_reserved_usd": 0,
   "ledger_delta_usd": 9.9530436,
   "selected_run_cost_usd": 9.9530436,
-  "first_request_utc": "2026-11-13T18:09:10.707105+00:00",
-  "elapsed_seconds": 3313.257922410965,
-  "token_usage": {
-    "prompt_tokens": 80537566,
-    "completion_tokens": 3798574
+  "ledger_interpretation": "API cash-ledger estimates only; excludes subscription fee or allowance valuation. Subscription attempts add zero API cash charge, not zero computational use.",
+  "subscription_calls": 10317,
+  "subscription_calls_without_usage": 167,
+  "subscription_token_usage": {
+    "prompt_tokens": 81146028,
+    "completion_tokens": 1207974
   },
-  "actual_tokens_per_elapsed_second": 25454.14271238834,
+  "first_request_utc": "2026-11-13T18:09:10.707105+00:00",
+  "elapsed_seconds": 18156.321620941162,
+  "token_usage": {
+    "prompt_tokens": 161683594,
+    "completion_tokens": 5006548
+  },
+  "actual_tokens_per_elapsed_second": 9180.83219057668,
   "performance_comparison": {
     "baseline_batch3": {
       "attempts": 11991,
@@ -91,9 +67,10 @@
       "first_to_last_request_start_seconds": 2950.748348236084,
       "actual_tokens_per_second": 25946.98360020037
     },
-    "extension_first_to_last_request_start_seconds": 3240.6845984458923,
-    "extension_actual_tokens_per_start_span_second": 26024.174040400096,
-    "ratio_to_baseline": 1.002974929239911,
-    "interpretation": "Descriptive only; workload, output lengths and service latency differ. In-progress usage excludes pending calls. Elapsed includes pauses; completed end is latest final-response file mtime."
+    "extension_first_to_last_request_start_seconds": 13373.27887892723,
+    "extension_actual_tokens_per_start_span_second": 12464.418300784844,
+    "ratio_to_baseline": 0.48038024353199155,
+    "mixed_interfaces": true,
+    "interpretation": "Descriptive only; workload, output lengths and service latency differ. In-progress usage excludes pending calls. Elapsed includes pauses; completed end is latest final-response file mtime. Subscription continuation changes the interface and billing path; a combined throughput ratio cannot isolate the effect of scheduling changes."
   }
 }

@@ -1,4 +1,5 @@
 import importlib.util
+import asyncio
 from pathlib import Path
 import pytest
 from ie498.cli import load_config
@@ -32,3 +33,25 @@ def test_extension_validates_entire_plan_before_mutation(tmp_path):
     with pytest.raises(ValueError,match='differs'):module.prepare(store,plan)
     assert store.rows("SELECT status FROM runs WHERE id='old'")[0]['status']=='cancelled_user'
     store.close()
+
+
+def test_first_run_access_stop_preserves_other_run_attempt_slots(monkeypatch):
+    calls=[]
+    async def limited(store,caller,run,stop):
+        calls.append(run)
+        stop.set()
+    monkeypatch.setattr(module,'run_one',limited)
+    asyncio.run(module.run_pending(None,None,['last_slot','two_slots'],asyncio.Event(),'two_slots'))
+    assert calls==['two_slots']
+
+
+def test_first_run_success_continues_each_remaining_run_once(monkeypatch):
+    calls=[]
+    async def complete(store,caller,run,stop):
+        calls.append(run)
+    monkeypatch.setattr(module,'run_one',complete)
+    pending=['last_slot','two_slots','another']
+    asyncio.run(module.run_pending(None,None,pending,asyncio.Event(),'two_slots'))
+    assert calls[0]=='two_slots'
+    assert sorted(calls)==sorted(pending)
+    assert pending==['last_slot','two_slots','another']

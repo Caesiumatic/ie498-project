@@ -154,6 +154,8 @@ Each complete run is one independent observation; neither the two firms nor the 
     text+='\nIndividual added reference runs (pilots excluded):\n\n'
     text+=table(reference,['id','repetition','status','rounds_completed','CI','effective_success','cost_usd'])
     text+='\nThe paper condition was added after viewing the original results. Its repeat labels 1–3 supply new independent observations, not retrospective changes to old trajectories. Comparisons are unpaired and potentially affected by execution-time or model-service differences. Five repeats still provide limited precision; neither a favorable example nor a condition ranking establishes stable behavior.\n'
+    if (ROOT/'reports/reference_text_review.md').exists():
+        text+='\nThe [paper-reference text review](reference_text_review.md) examines both sellers in all five repeats at fixed rounds 1, 151, and 300. It verifies sampled raw responses and preceding memory states, describes state lengths and replacements, and documents an example of older information retained beyond the H100 market-data window. This is a post-hoc descriptive review, separate from the run-level outcome analysis.\n'
     extension_interpretation=ROOT/'reports/extension_interpretation.md'
     if len(primary)==75 and len(reference)==5 and extension_interpretation.exists():
         text+='\n'+extension_interpretation.read_text()+'\n'
@@ -181,7 +183,13 @@ Each complete run is one independent observation; neither the two firms nor the 
         intervention_plan=ROOT/'configs/interventions-freeze.json'
         if intervention_plan.exists():
             ip=json.loads(intervention_plan.read_text());n_eligible=sum(r['eligible'] for r in ip['candidates'])
-            text+=f'The saved intervention freeze covered {len(ip["candidates"])} parents; {n_eligible} were eligible and {sum(r["selected"] for r in ip["candidates"])} were selected under the budget plan. There are no completed branches to report. Screening and budget reasons are saved in configs/interventions-freeze.json. This saved freeze may precede newly added parents; compare its candidate IDs with current parent_eligibility.csv before interpreting it as screening of the expanded sample.\n'
+            text+=f'The saved intervention freeze covers {len(ip["candidates"])} parents; {n_eligible} were eligible and {sum(r["selected"] for r in ip["candidates"])} were selected. Screening and selection reasons are saved in configs/interventions-freeze.json. '
+            if len(eligible) and {r['parent'] for r in ip['candidates']}==set(eligible.parent) and len(ip['candidates'])==len(eligible):
+                text+='The freeze includes every current parent candidate. '
+                if n_eligible==0:text+='No maintenance or shock branches were run because no parent met the prespecified eligibility criterion; intervention effects cannot be estimated from this sample.\n'
+                else:text+='There are no completed branches to report.\n'
+            else:
+                text+='The saved and current candidate sets differ; this freeze is not screening of the complete expanded sample. There are no completed branches to report.\n'
         else:text+='No completed, pairable maintenance/shock data are available. See the final status record for reasons these experiments were not executed.\n'
     text+='\n## Resources and API cash ledger\n\n'
     text+='The retained cost_usd column equals api_cash_ledger_usd for backward compatibility. It excludes a monetary valuation of subscription usage. Token totals combine reported usage from both interfaces; subscription columns identify its contribution. Missing response usage is counted separately rather than estimated.\n\n'

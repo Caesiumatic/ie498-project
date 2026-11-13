@@ -1,0 +1,14 @@
+{
+  "verified_at_utc": "2026-11-13T21:05:08.529017+00:00",
+  "source_snapshot": "data/backups/batches/20261113T071008746916Z",
+  "removed_generated_restore": "data/restored/20261113T071008746916Z",
+  "source_manifest_sha256": "18ca869f2008d143a14d6c1d04bf957f3e8bfa02fd558b6562f901e4edc71c43",
+  "verified_files": 81816,
+  "source_and_restored_hashes_match": true,
+  "additional_runtime_files": {
+    "experiments.sqlite-shm": 32768,
+    "experiments.sqlite-wal": 0
+  },
+  "allocated_file_bytes_reclaimed": 2856013824,
+  "reason": "Reclaim only a verified redundant restore copy before expanded final restoration and packaging; live data and every versioned source snapshot retained."
+}

@@ -36,6 +36,17 @@ These scheduling changes preserve request bodies, prompts, model/reasoning/outpu
 
 Compare extension wall-clock timings with these baseline measurements after completion. A precise causal speedup would require a separate controlled benchmark; do not attribute differences in model latency or output lengths solely to the scheduler.
 
+## Observed extension API phase
+
+The following measurements use only the 35 additional run IDs and API attempt rows through 57,680, before any subscription request. Reported tokens include input and output.
+
+| Window | Attempts | Reported tokens | Request-start span | Tokens/s | Relative to batch 3 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Before first credit rejection | 16,665 | 84,213,623 | 3,118.65 s | 27,003 | +4.1% |
+| Entire extension API phase | 16,763 | 84,336,140 | 3,240.68 s | 26,024 | +0.3% |
+
+The final 121.84-second incident window contains 85 zero-usage credit rejections and 13 accepted calls using 122,517 tokens. Before that incident, accepted-call median/p90 observed durations were 2.67/5.01 seconds, compared with 2.57/4.38 seconds in batch 3. These observational measurements are consistent with modest throughput improvement, but do not isolate a scheduling effect: workload composition, trajectory lengths, output lengths, and service latency differ. The subscription continuation is excluded from this comparison.
+
 ## Later subscription-interface continuation
 
 After 7,078 extension rounds, API credit exhaustion interrupted execution. The remaining 3,422 rounds resumed through the separately authorized ChatGPT subscription Responses interface. That later change preserves model, reasoning level, original prompt text, and memory rules, but omits the unsupported output-token caps and Chat Completions transport controls. It is distinct from the scheduling changes above. The combined extension duration includes the access pause and two interfaces; its throughput ratio cannot estimate the scheduling speedup. Subscription rate-limit responses use the same bounded retry policy and server-directed backoff. See `reports/extension_execution.json` for recorded resources and [subscription_continuation.md](subscription_continuation.md) for the interface details.
