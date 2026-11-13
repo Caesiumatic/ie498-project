@@ -4,31 +4,31 @@ This experiment tests how visible market history and strategic memory shape pric
 
 The runner records each decision, memory view, settlement, and API cost, and resumes interrupted runs by logical call ID. Start with the [results](reports/research_report.md), [research protocol](docs/protocol.md), or [current status](docs/status.md); the [decision log](docs/decisions.md) records protocol choices.
 
-## Five-repeat extension running through ChatGPT subscription access
+## Completed five-repeat experiment
 
-The user requested an extension after reviewing the three-repeat results. The frozen design now contains **75 bullet-memory runs plus 5 formal H100 paper-reference runs**, each lasting 300 rounds. The original 45 runs are retained; The provider previously paused the 30 additional bullet runs and 5 fresh paper runs after 7,078 of 10,500 new rounds with `credit_balance_exhausted`. They have now resumed through the official subscription interface. Partial trajectories do not enter formal endpoint results. The ledger is $42.15208822, including $9.95304360 for this extension, with no in-flight reservations. The reference overwrites PLANS/INSIGHTS each round, rather than appending bullets. Its labels r1–r3 supplement the earlier sample counts but were added later; historical pilots are not relabeled.
-
-The user has now authorized continuing the remaining **3,422 rounds through ChatGPT subscription usage**. Official OAuth authorization has been completed, and the Responses adapter is producing valid experimental outputs from the preserved checkpoints. See [subscription continuation](docs/subscription_continuation.md) for the login/resume commands and disclosed interface differences. Saved accepted responses are reused only for their original logical calls.
-
-See also the [paper-method audit](docs/paper_reference_method.md), [frozen extension](configs/extension-freeze.json), and [performance measurements](docs/performance.md). The original three-repeat report is preserved as [three_repeat_report.md](reports/three_repeat_report.md). Results below describe that completed delivery until the expanded report is regenerated.
-
-## Completed three-repeat results
-
-The completed matrix contains **45 formal runs and 13,500 rounds**, with 3 independent runs per condition and 300 rounds per run. Six completed pilots are reported separately.
+The frozen extension is complete: **75 bullet-memory runs plus 5 formal H100 paper-reference runs**, each lasting 300 rounds, for **24,000 formal rounds**. The original 45 runs remain unchanged. The new paper condition supplies five fresh independent runs, including labels r1–r3; it does not modify historical trajectories or relabel pilots.
 
 | Measure | Recorded result |
 | --- | --- |
-| Effective supracompetitive success | 8 of 45 formal runs |
-| Minimum effective history window | None of the tested windows met the 80% sample success threshold |
-| Maintenance/shock eligibility | 0 of 3 formal H100/full parents; no intervention branches executed |
-| Cost ledger | $32.19904462 |
-| Validation at delivery | 22 tests and the complete data audit passed |
+| Bullet-memory effective success | 9 of 75 runs (original 8/45; added 1/30) |
+| Bullet-memory price-criterion success | 69 of 75 runs |
+| Paper-reference effective success | 0 of 5 runs; mean CI −0.348 |
+| Minimum tested effective H | Not identified for any mode; no cell reaches 4/5 successes |
+| Maintenance/shock eligibility | 0 of 5 H100/full bullet parents; zero branches |
+| API cash ledger | $42.15208822; excludes subscription usage valuation |
+| Verification | 75 offline tests and the full 68,150-attempt data audit passed |
 
-The intervention implementation and offline tests are included. Mock, smoke, pilot, and formal formation results retain separate labels and sample definitions.
+The extension followed inspection of the original results. Five repeats narrow the observed Wilson intervals in all 15 cells, but outcomes still vary substantially and no condition reaches the predefined 80% sample success threshold. High prices frequently coincide with low profits. Complete run points and uncertainty intervals are in the [research report](reports/research_report.md) and [extension comparison](reports/extension_interpretation.md).
 
-Use the analysis commands to recompute results from the delivered data. The smoke/pilot commands below are for new, separately documented experiment versions. The program rejects reuse of a historical run ID with a mismatched configuration. The full delivery archive includes `reports/restore_verification.json`.
+After API credit exhaustion, the remaining **3,422 rounds completed through official ChatGPT subscription Responses**, including a later continuation of the final 39 rounds. GPT‑6 Luna, low reasoning, original prompt text, and memory rules were retained. The subscription interface omits the original output-token caps and transport controls; no equivalence experiment was performed. This within-run interface change limits causal comparisons. See [subscription continuation](docs/subscription_continuation.md) for exact provenance and commands.
+
+The paper-reference condition overwrites PLANS/INSIGHTS each round. See the [paper-method audit](docs/paper_reference_method.md), [descriptive text review](reports/reference_text_review.md), [frozen design](configs/extension-freeze.json), and [performance measurements](docs/performance.md). The [original three-repeat report at its historical commit](https://github.com/Caesiumatic/ie498-project/blob/9dbee68a8d851890bbb0e8c4967b014db98ce30e/reports/three_repeat_report.md) preserves its original figures and wording.
+
+Saved-data analysis needs no credentials. Smoke, pilot, and collection commands below are for new, separately documented experiments. Historical run IDs reject mismatched scientific configurations. The full delivery archive includes raw data and restoration verification.
 
 ## Installation and credentials
+
+For new API-key runs, configure `.env` as below. Subscription continuation uses the separate [official authorization workflow](docs/subscription_continuation.md).
 
 ```bash
 cd /workspace/ie498
@@ -63,6 +63,8 @@ uv run python scripts/run_formation.py
 
 # 4. Reanalyze saved data without API calls
 uv run ie498 --data data/runs/live analyze --out reports/live
+uv run python scripts/compare_extension.py
+uv run python scripts/make_report.py
 uv run ie498 --data data/runs/live status
 ```
 
@@ -109,7 +111,7 @@ uv run ie498 restore data/backups/live/TIMESTAMP data/restored/live-copy
 uv run ie498 --data data/restored/live-copy status
 ```
 
-SQLite snapshots use its consistent backup API. Verified, unchanged request/response files may be shared with older backups; live files and databases are never hard-linked to backups. Restoration verifies every file hash and database integrity, then copies into a new directory. Use restored copies for modifications. Raw-data snapshots currently exist locally only. Complete raw data, virtual environments, and credentials are Git-ignored; the delivery archive includes data and reports but excludes credentials.
+SQLite snapshots use its consistent backup API. Verified, unchanged request/response files may be shared with older backups; live files and databases are never hard-linked to backups. Restoration verifies every file hash and database integrity, then copies into a new directory. Use restored copies for modifications. Earlier snapshots can be retained losslessly under `data/backups/archives/TIMESTAMP.zip`, with per-archive verification receipts. Extract the timestamp directory before passing it to `ie498 restore`; the original snapshot manifest remains inside. Raw-data snapshots currently exist locally only. Complete raw data, virtual environments, and credentials are Git-ignored; the delivery archive includes data and reports but excludes credentials.
 
 ## Interpreting the metrics
 
@@ -119,7 +121,7 @@ The Nash price is approximately 1.47293; the symmetric joint-profit optimum is a
 
 ## Delivery archive and source history
 
-The GitHub repository contains source, documentation, figures, and summary tables. Raw-data recomputation requires the separate 343 MB delivery archive, recorded at `/workspace/IE498_project.zip` in the original delivery environment. The archive is not hosted on GitHub: its attachment upload failed authentication. That archive predates the English documentation update.
+The GitHub repository contains source, English documentation, figures, and summary tables. Complete raw-data recomputation requires the separate expanded delivery archive at `/workspace/IE498_project.zip`. The full archive is a local deliverable and is not hosted on GitHub; no independent remote raw-data backup is claimed.
 
 The archive contains source, a consistent raw-data snapshot, analysis outputs, and `reports/repository.bundle`; it excludes credentials and the virtual environment. Its `DELIVERY_MANIFEST.json` lists per-file SHA‑256 hashes. An API key is not needed to analyze existing data.
 
@@ -130,6 +132,8 @@ git clone reports/repository.bundle ../ie498-restored
 cd ../ie498-restored
 uv sync --extra dev
 uv run ie498 restore ../ie498/data/runs/live data/runs/live
+uv run ie498 --data data/runs/live analyze --out reports/live
+uv run python scripts/compare_extension.py
 uv run python scripts/make_report.py
 ```
 

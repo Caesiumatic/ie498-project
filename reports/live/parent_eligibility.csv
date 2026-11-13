@@ -2,5 +2,5 @@ parent,status,checkpoint_available,eligible
 formation-r1-h100-full,completed,True,False
 formation-r2-h100-full,completed,True,False
 formation-r3-h100-full,completed,True,False
-formation-r4-h100-full,paused_access,True,False
-formation-r5-h100-full,paused_access,True,False
+formation-r4-h100-full,completed,True,False
+formation-r5-h100-full,completed,True,False

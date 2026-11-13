@@ -4,11 +4,11 @@
 
 This project studies visible market-history windows H∈{0,1,5,20,100} and clear, full, and compressed strategic memory in a repeated Bertrand duopoly with logit demand. All live sellers and compressors use the user-selected GPT‑6 Luna with low reasoning. The independent unit in the main experiment is a complete 300-round duopoly run.
 
-There are **45 completed formal bullet-memory formation runs**, of which **8** meet the predefined effective supracompetitive criterion, and **0 completed formal paper-reference runs**, of which **0** meet the same criterion. The two architectures are summarized separately; their success counts are not pooled. There are 6 complete pilots; interrupted and failed pilots remain separately recorded. The cost ledger totals **$42.152088**, including **$0.103625** in conservative charges for requests with unknown processing status. The budget is uncapped (user-authorized). Conclusions below use saved data only.
+There are **75 completed formal bullet-memory formation runs**, of which **9** meet the predefined effective supracompetitive criterion, and **5 completed formal paper-reference runs**, of which **0** meet the same criterion. The two architectures are summarized separately; their success counts are not pooled. There are 6 complete pilots; interrupted and failed pilots remain separately recorded. The API cash ledger totals **$42.152088**, including **$0.103625** in conservative estimates for API-key requests with unknown processing status. This is not an invoice or a valuation of subscription usage. The budget is uncapped (user-authorized). Conclusions below use saved data only.
 
-The frozen extension targets 75 bullet-memory runs and 5 separate paper-reference runs (80 total). Current completed counts are 45 and 0, respectively. The extension is not yet complete; the tables below are interim summaries of completed runs.
+The frozen extension targets 75 bullet-memory runs and 5 separate paper-reference runs (80 total). Current completed counts are 75 and 5, respectively. The planned formation sample is complete.
 
-The extension is paused because the provider returned credit_balance_exhausted / insufficient_quota. Account funding is required before resuming the saved checkpoints. Partial runs are excluded from endpoint summaries; see data/manifests/extension-billing-pause.json.
+
 
 After reviewing the original three-repeat results, the user requested a fixed expansion to five repeats and a new H=100 condition using the paper's overwritten PLANS/INSIGHTS memory. The first 45 runs remain intact. Additional runs complete repeats 4–5 of the 15-cell matrix; five fresh paper-reference runs supply the new comparison, including labels 1–3. These labels do not imply that the added condition ran historically alongside the original repeats or used matched random draws. Historical paper pilots remain excluded.
 
@@ -30,7 +30,9 @@ Demand per round is `qᵢ = 100 exp((2−pᵢ)/0.25) / [1 + exp((2−p₁)/0.25)
 
 Sellers see only cost, the textual $4.51 ceiling, permitted feedback from the most recent H rounds, and their own memory. They do not see the demand formula, experimental condition, success thresholds, or remaining horizon. H=0 provides no market feedback; full/compressed then accumulate self-generated strategies rather than environmental observations. Both inputs are fixed before either response arrives. A round's bullet can reference outcomes only through the previous round. Executed-price shocks apply after both submissions.
 
-Independent Chat Completions requests carry no conversation links and provide no tools. SQLite transactions ensure one settlement per round, with one immutable memory append per bullet-memory seller; paper-reference state is replaced by the latest PLANS/INSIGHTS output while original responses remain archived. Valid responses are cached by logical call solely for recovery of that call; new rounds are sampled again even with identical prompts. Costs are reserved before calls, retries are bounded, and every attempt retains its raw request, response, and cost. Validation covers mock end-to-end execution, recovery after partial responses, budgeting, branching, and backup restoration. The saved audit records passed=True for 22712 rounds and 57680 attempts. This receipt certifies its recorded snapshot, not data added afterward. See [data_audit.json](data_audit.json) for audit scope and `reports/restore_verification.json` in the full archive for snapshot restoration verification. Test counts are recorded in the decision/status logs rather than asserted by this report generator. Current retry counts and failures are in `live/resources.csv` and `live/runs.csv`; all attempts, including truncated outputs, are retained.
+Recorded inference includes API-key Chat Completions and ChatGPT-subscription Responses. The switch preserves GPT-6 Luna, low reasoning, original prompt text and memory logic, with independent single-user-message requests, no conversation links and no tools. The subscription interface does not support the original output-token caps; interface differences and exact wire requests are retained separately. The user authorized continuation without an equivalence experiment.
+
+SQLite transactions ensure one settlement per round, with one immutable memory append per bullet-memory seller; paper-reference state is replaced by the latest PLANS/INSIGHTS output while original responses remain archived. Valid responses are cached by logical call solely for recovery of that call; new rounds are sampled again even with identical prompts. API-key costs are reserved before calls, retries are bounded, and every attempt retains its request, available response and usage, and billing path. Validation covers mock end-to-end execution, recovery after partial responses, budgeting, branching, and backup restoration. The saved audit records passed=True for 26134 rounds and 68150 attempts. This receipt certifies its recorded snapshot, not data added afterward. See [data_audit.json](data_audit.json) for audit scope and `reports/restore_verification.json` in the full archive for snapshot restoration verification. Test counts are recorded in the decision/status logs rather than asserted by this report generator. Current retry counts and failures are in `live/resources.csv` and `live/runs.csv`; all attempts, including truncated outputs, are retained.
 
 The v1.0 pilots produced some outputs exceeding 60 words or containing multiple sentences; failed samples were not cleaned into successes. Before the formal stage, v1.1 added structured sentence/word-count constraints and restarted independent pilots. Original outputs and initial prompts remain preserved. See docs/decisions.md.
 
@@ -67,27 +69,27 @@ The amended sample and run-level frozen configurations are in configs/extension-
 
 | mode | H | n | successes | success_rate | wilson_low | wilson_high | mean_price | mean_joint_profit | mean_CI |
 |---|---|---|---|---|---|---|---|---|---|
-| clear | 0 | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 4.4748 | 0.3263 | -1.9316 |
-| clear | 1 | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 3.1538 | 4.3772 | -1.7548 |
-| clear | 5 | 3 | 1 | 0.3333 | 0.0615 | 0.7923 | 2.0103 | 47.0794 | 0.1088 |
-| clear | 20 | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 3.2200 | 15.1014 | -1.2868 |
-| clear | 100 | 3 | 2 | 0.6667 | 0.2077 | 0.9385 | 2.6000 | 44.8224 | 0.0103 |
-| compressed | 0 | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 4.5100 | 0.0306 | -1.9445 |
-| compressed | 1 | 3 | 1 | 0.3333 | 0.0615 | 0.7923 | 2.5960 | 27.0506 | -0.7653 |
-| compressed | 5 | 3 | 1 | 0.3333 | 0.0615 | 0.7923 | 2.2012 | 34.0669 | -0.4591 |
-| compressed | 20 | 3 | 1 | 0.3333 | 0.0615 | 0.7923 | 2.8359 | 22.0541 | -0.9834 |
-| compressed | 100 | 3 | 1 | 0.3333 | 0.0615 | 0.7923 | 2.7455 | 28.0500 | -0.7217 |
-| full | 0 | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 4.2183 | 2.7034 | -1.8279 |
-| full | 1 | 3 | 1 | 0.3333 | 0.0615 | 0.7923 | 3.1711 | 21.5899 | -1.0036 |
-| full | 5 | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 3.8167 | 0.8642 | -1.9082 |
-| full | 20 | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 3.8915 | 1.1393 | -1.8961 |
-| full | 100 | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 2.9751 | 15.3528 | -1.2758 |
+| clear | 0 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 4.4808 | 0.2734 | -1.9339 |
+| clear | 1 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 3.3688 | 3.0129 | -1.8144 |
+| clear | 5 | 5 | 2 | 0.4000 | 0.1176 | 0.7693 | 2.2654 | 41.3375 | -0.1417 |
+| clear | 20 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 3.4417 | 9.3397 | -1.5383 |
+| clear | 100 | 5 | 2 | 0.4000 | 0.1176 | 0.7693 | 2.6281 | 34.2267 | -0.4521 |
+| compressed | 0 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 4.5100 | 0.0306 | -1.9445 |
+| compressed | 1 | 5 | 1 | 0.2000 | 0.0362 | 0.6245 | 2.6616 | 22.3798 | -0.9691 |
+| compressed | 5 | 5 | 1 | 0.2000 | 0.0362 | 0.6245 | 2.6137 | 22.1917 | -0.9773 |
+| compressed | 20 | 5 | 1 | 0.2000 | 0.0362 | 0.6245 | 2.5956 | 23.7226 | -0.9105 |
+| compressed | 100 | 5 | 1 | 0.2000 | 0.0362 | 0.6245 | 3.1223 | 17.2377 | -1.1936 |
+| full | 0 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 4.3350 | 1.6343 | -1.8745 |
+| full | 1 | 5 | 1 | 0.2000 | 0.0362 | 0.6245 | 3.4747 | 13.0624 | -1.3758 |
+| full | 5 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 3.8810 | 0.6062 | -1.9194 |
+| full | 20 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 3.6309 | 4.2472 | -1.7605 |
+| full | 100 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 2.8671 | 18.1296 | -1.1546 |
 
 ![Formation mean CI](live/formation_heatmap.png)
 
 ![Independent run points](live/run_points.png)
 
-The highest condition mean CI is clear / H=5 (0.109); the lowest is compressed / H=0 (-1.945). These rankings describe this fixed model, prompt, and sample, and should not be generalized across models.
+The highest condition mean CI is clear / H=5 (-0.142); the lowest is compressed / H=0 (-1.945). These rankings describe this fixed model, prompt, and sample, and should not be generalized across models.
 
 Effective success did not occur in every run. Interpret complete price/profit trajectories, between-run variation, and all three success indicators together; a few successful paths do not establish a stable equilibrium.
 
@@ -101,21 +103,53 @@ Minimum tested effective H and supporting evidence:
 
 The seller receives its most recent PLANS and INSIGHTS, rewrites both in each response, and sees up to 100 market rounds. This permits revision, summarization, or deletion of older memory content. Full bullet memory instead appends immutable sentences. Both use the same market and evaluation rules, but output format and memory-update contracts differ. The comparison is a methodological replication using GPT‑6 Luna, not an exact rerun of the original model.
 
-No eligible data.
+| architecture | condition | H | n | successes | success_rate | wilson_low | wilson_high | mean_price | mean_joint_profit | mean_CI | CI_bootstrap_low | CI_bootstrap_high |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| paper_reference | overwritten_plans_insights | 100 | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 1.9811 | 36.6057 | -0.3483 | -1.1475 | 0.0696 |
 
 H100 comparison with the three bullet-memory modes; each row uses only completed formal runs of its own condition:
 
 | architecture | condition | n | successes | success_rate | wilson_low | wilson_high | mean_price | mean_joint_profit | mean_CI |
 |---|---|---|---|---|---|---|---|---|---|
-| bullet_memory | clear | 3 | 2 | 0.6667 | 0.2077 | 0.9385 | 2.6000 | 44.8224 | 0.0103 |
-| bullet_memory | compressed | 3 | 1 | 0.3333 | 0.0615 | 0.7923 | 2.7455 | 28.0500 | -0.7217 |
-| bullet_memory | full | 3 | 0 | 0.0000 | 0.0000 | 0.5615 | 2.9751 | 15.3528 | -1.2758 |
+| bullet_memory | clear | 5 | 2 | 0.4000 | 0.1176 | 0.7693 | 2.6281 | 34.2267 | -0.4521 |
+| bullet_memory | compressed | 5 | 1 | 0.2000 | 0.0362 | 0.6245 | 3.1223 | 17.2377 | -1.1936 |
+| bullet_memory | full | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 2.8671 | 18.1296 | -1.1546 |
+| paper_reference | overwritten_plans_insights | 5 | 0 | 0.0000 | 0.0000 | 0.4345 | 1.9811 | 36.6057 | -0.3483 |
 
 Individual added reference runs (pilots excluded):
 
-No eligible data.
+| id | repetition | status | rounds_completed | CI | effective_success | cost_usd |
+|---|---|---|---|---|---|---|
+| formation-paper-r1-h100 | 1.0000 | completed | 300 | 0.0437 | False | 0.2687 |
+| formation-paper-r2-h100 | 2.0000 | completed | 300 | 0.0980 | False | 0.2686 |
+| formation-paper-r3-h100 | 3.0000 | completed | 300 | -1.9357 | False | 0.2647 |
+| formation-paper-r4-h100 | 4.0000 | completed | 300 | 0.0259 | False | 0.2632 |
+| formation-paper-r5-h100 | 5.0000 | completed | 300 | 0.0269 | False | 0.2630 |
 
 The paper condition was added after viewing the original results. Its repeat labels 1–3 supply new independent observations, not retrospective changes to old trajectories. Comparisons are unpaired and potentially affected by execution-time or model-service differences. Five repeats still provide limited precision; neither a favorable example nor a condition ranking establishes stable behavior.
+
+The [paper-reference text review](reference_text_review.md) examines both sellers in all five repeats at fixed rounds 1, 151, and 300. It verifies sampled raw responses and preceding memory states, describes state lengths and replacements, and documents an example of older information retained beyond the H100 market-data window. This is a post-hoc descriptive review, separate from the run-level outcome analysis.
+
+## Five-repeat extension: descriptive findings
+
+The expanded bullet-memory matrix contains 75 complete 300-round runs across 15 conditions. The original 45 runs have 8 effective successes; the 30 added runs have 1. The full matrix has 9/75 effective successes and 69/75 price-criterion successes. These pooled counts describe coverage; each condition remains the unit of comparison.
+
+Across the 15 cells, mean CI ranges from -1.945 to -0.142; within-cell sample standard deviations range from 0.000 to 1.460. Extending the sample changes cell mean CI by -0.518 to +0.136. Wilson interval widths range from 0.561–0.731 at n=3 and 0.434–0.652 at n=5; widths decrease in 15/15 cells. Interval widths depend on the observed success count as well as sample size, so an increase in repeats need not narrow every realized interval.
+
+0 of 15 cells meet the predefined 80% sample effective-success criterion, which requires at least 4/5 successful runs at n=5. The minimum tested effective H is reported separately for each bullet-memory mode in `live/minimum_tested_effective_H.json`; it is not a population threshold.
+
+The separately added H100 paper-reference condition contains 5 new complete runs, with 0/5 effective successes (Wilson 95% interval [0.000, 0.434]). Its mean CI is -0.348, sample standard deviation 0.888, and run-level range [-1.936, 0.098]. These observations are not pooled with full bullet memory or historical pilots.
+
+The extension and new architectural condition were requested after inspecting the original results. Five repeats remain a small sample. Repeats 4–5 are a separate descriptive cohort, not a randomized time contrast; original and extended estimates overlap and must not be treated as independent samples. New paper-reference labels 1–3 denote additional independent runs, not historical execution alongside the original repeats or matched random seeds. Execution-time/model-service differences and post-result design changes limit causal and confirmatory interpretations. No post hoc significance test is used to decide whether to stop or favor a condition.
+
+The added bullet repeats and all five formal paper-reference trajectories switched from API-key Chat Completions to ChatGPT-subscription Responses at saved checkpoints. The model, low reasoning level, original user prompt text, and memory rules were retained; the subscription route omits the original output-token caps and transport-specific controls. No interface-equivalence experiment was performed. Cohort and architectural differences therefore cannot be attributed solely to repeat randomness or memory representation; the interface change is an additional limitation. Exact switch checkpoints and wire requests are retained in the resume manifests and raw data.
+
+![H100 reference comparison](live/reference_comparison.png)
+
+![Success-rate interval comparison](live/extension_precision.png)
+
+See `live/extension_precision.csv` for every condition and cohort, including success fractions, Wilson intervals, CI means, sample standard deviations, ranges, and descriptive bootstrap intervals. The two-run added cohort is particularly imprecise.
+
 
 ## Historical interpretation of the original three-repeat sample
 
@@ -142,29 +176,49 @@ In threshold sensitivity analysis, changing the price margin from 0.02 to 0.01 o
 
 There are 5 bullet-memory formal H100/full parent candidates; 5 have round-200 checkpoints, and 0 meet effective-success criteria in rounds 151–200.
 
-The saved intervention freeze covered 3 parents; 0 were eligible and 0 were selected under the budget plan. There are no completed branches to report. Screening and budget reasons are saved in configs/interventions-freeze.json. This saved freeze may precede newly added parents; compare its candidate IDs with current parent_eligibility.csv before interpreting it as screening of the expanded sample.
+The saved intervention freeze covers 5 parents; 0 were eligible and 0 were selected. Screening and selection reasons are saved in configs/interventions-freeze.json. The freeze includes every current parent candidate. No maintenance or shock branches were run because no parent met the prespecified eligibility criterion; intervention effects cannot be estimated from this sample.
 
-## Resources and recorded costs
+## Resources and API cash ledger
 
-| stage | calls | input_tokens | cached_input_tokens | output_tokens | reasoning_tokens | cost_usd |
+The retained cost_usd column equals api_cash_ledger_usd for backward compatibility. It excludes a monetary valuation of subscription usage. Token totals combine reported usage from both interfaces; subscription columns identify its contribution. Missing response usage is counted separately rather than estimated.
+
+| stage | calls | input_tokens | cached_input_tokens | output_tokens | reasoning_tokens | api_cash_ledger_usd |
 |---|---|---|---|---|---|---|
 | cache_calibration | 12 | 218536 | 80827 | 2249 | 1042 | 0.0180 |
-| formation | 50802 | 296232149 | 0 | 9431155 | 4767410 | 34.3388 |
-| formation_reference | 1932 | 8072181 | 0 | 1041911 | 372761 | 1.3282 |
+| formation | 60156 | 373399444 | 37529344 | 10292638 | 4787678 | 34.3388 |
+| formation_reference | 3048 | 14005523 | 0 | 1403554 | 372828 | 1.3282 |
 | pilot | 4910 | 45868656 | 82005 | 1281683 | 583420 | 6.4640 |
 | smoke | 24 | 8799 | 0 | 4489 | 1865 | 0.0031 |
+
+Subscription attempts and observed tokens, included in the total resource counts above:
+
+| stage | subscription_calls | subscription_input_tokens | subscription_output_tokens | subscription_reasoning_tokens | subscription_calls_without_usage |
+|---|---|---|---|---|---|
+| cache_calibration | 0 | 0 | 0 | 0 | 0 |
+| formation | 9354 | 77167295 | 861483 | 20268 | 134 |
+| formation_reference | 1116 | 5933342 | 361643 | 67 | 33 |
+| pilot | 0 | 0 | 0 | 0 | 0 |
+| smoke | 0 | 0 | 0 | 0 | 0 |
+
+Billing paths differ within the continued runs. Dollar averages below are descriptive API cash-ledger amounts and do not establish comparative memory efficiency or total experiment cost.
 
 Mean resources per formal run, grouped by memory mode across all H values:
 
 | mode | calls | cost_usd | compressor_input_tokens | final_archive_bytes | max_visible_memory_words |
 |---|---|---|---|---|---|
-| clear | 600.0000 | 0.1681 | 0.0000 | 151794.8000 | 0.0000 |
-| compressed | 1198.0667 | 0.8032 | 6172250.9333 | 153883.1333 | 58.4667 |
-| full | 600.0000 | 0.7430 | 0.0000 | 159606.0667 | 13025.8667 |
+| clear | 602.0400 | 0.1503 | 0.0000 | 152175.5600 | 0.0000 |
+| compressed | 1202.8800 | 0.5562 | 6178908.6000 | 155632.0400 | 58.6800 |
+| full | 601.3200 | 0.6670 | 0.0000 | 158564.9200 | 12898.9200 |
 
-The total ledger is $42.152088. The user removed the spending cap; actual costs and in-flight reservations remain recorded. Attempts with unknown server-processing status are charged at the reserved upper bound; these estimates are not invoices. Reasoning tokens are already included in output tokens and are not charged twice.
+Mean resources per completed formal paper-reference run (separate from bullet modes):
 
-Compression reduces seller-visible memory but retains the complete original archive and pays to reread it every round. Conclusions therefore concern decision-context compression, not a system that needs only one sentence of memory. History/memory/archive components are recorded as conservative UTF‑8 byte bounds, while API tokens use actual usage. The tokenizer endpoint was inaccessible in this environment, so no fabricated exact token counts are reported.
+| calls | cost_usd | input_tokens | output_tokens | max_visible_memory_words |
+|---|---|---|---|---|
+| 609.6000 | 0.2656 | 2801104.6000 | 280710.8000 | 206.4000 |
+
+The API cash ledger is $42.152088. The user removed the spending cap; API cash-ledger estimates and in-flight reservations remain recorded. API-key attempts with unknown server-processing status are recorded at the reserved upper bound; these estimates are not invoices. Subscription attempts have zero API cash charge in this ledger, while their observed tokens remain recorded. The ledger does not measure remaining subscription allowance or allocate the subscription fee. Reasoning tokens are already included in output tokens and are not counted twice.
+
+Compression reduces seller-visible memory but retains the complete original archive and processes it again every round. Conclusions therefore concern decision-context compression, not a system that needs only one sentence of memory. History/memory/archive components are recorded as conservative UTF‑8 byte bounds, while model tokens use reported usage. The tokenizer endpoint was inaccessible in this environment, so no fabricated exact token counts are reported.
 
 ## Game theory and AI interpretation
 
@@ -182,6 +236,7 @@ See README for commands, recovery steps, and data structure. Recompute the analy
 
 ```bash
 uv run ie498 --data data/runs/live analyze --out reports/live
+uv run python scripts/compare_extension.py  # Requires all 75 + 5 formal runs complete
 uv run python scripts/make_report.py
 ```
 

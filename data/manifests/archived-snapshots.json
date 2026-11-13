@@ -1,0 +1,61 @@
+{
+  "reason": "Lossless archival of older verified snapshots to reserve final delivery space; live data and latest snapshots retained uncompressed.",
+  "snapshots": [
+    {
+      "snapshot": "20261113T190422997041Z",
+      "archive": "data/backups/archives/20261113T190422997041Z.zip",
+      "sha256": "ce7f30e3ca5c7bd5b47f90754ccf8870ac998fe00cd33605b182cc456d5378bf",
+      "files": 115343,
+      "all_file_checksums_verified": true,
+      "uncompressed_directory_removed": true
+    },
+    {
+      "snapshot": "20261113T071008746916Z",
+      "archive": "data/backups/archives/20261113T071008746916Z.zip",
+      "sha256": "9992e8d6ef6144a7174200c49a9762a440094ade48a79a32b70ba6b125c93f6e",
+      "files": 81817,
+      "all_file_checksums_verified": true,
+      "uncompressed_directory_removed": true
+    },
+    {
+      "snapshot": "20261113T065755735469Z",
+      "archive": "data/backups/archives/20261113T065755735469Z.zip",
+      "sha256": "97aec7beb772d9cd8604cfedaefe95e07942d6e2aac3453d6030f236c9df2a0f",
+      "files": 81817,
+      "all_file_checksums_verified": true,
+      "uncompressed_directory_removed": true
+    },
+    {
+      "snapshot": "20261113T064910922578Z",
+      "archive": "data/backups/archives/20261113T064910922578Z.zip",
+      "sha256": "b6087bbbeb63baafe616b2fc5ebfbac14fef5da2a5c982e0d983885ae4498ed2",
+      "files": 80779,
+      "all_file_checksums_verified": true,
+      "uncompressed_directory_removed": true
+    },
+    {
+      "snapshot": "20261113T055941697882Z",
+      "archive": "data/backups/archives/20261113T055941697882Z.zip",
+      "sha256": "02f2f9ea113533ed4bbc5894cbc20cc70b7d1a5c27f0be51ce85f9dcdd87d4c1",
+      "files": 56797,
+      "all_file_checksums_verified": true,
+      "uncompressed_directory_removed": true
+    },
+    {
+      "snapshot": "20261113T055510944513Z",
+      "archive": "data/backups/archives/20261113T055510944513Z.zip",
+      "sha256": "ef1cccce87c530e8a75d8b5e8c93f2adca671884b634009498d849155fa46ce1",
+      "files": 56613,
+      "all_file_checksums_verified": true,
+      "uncompressed_directory_removed": true
+    },
+    {
+      "snapshot": "20261113T055038029202Z",
+      "archive": "data/backups/archives/20261113T055038029202Z.zip",
+      "sha256": "08b8887afd73b6f6c0ef7059932d346b388447b9b7a065ba93158e7cbc5f724a",
+      "files": 55669,
+      "all_file_checksums_verified": true,
+      "uncompressed_directory_removed": true
+    }
+  ]
+}

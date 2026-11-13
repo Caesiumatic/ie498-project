@@ -2,17 +2,17 @@
   "passed": true,
   "counts": {
     "verified_original_runs": 45,
-    "verified_reference_memory_views": 2614,
+    "verified_reference_memory_views": 3688,
     "runs": 102,
-    "rounds": 22712,
-    "memory_entries": 42822,
-    "attempts": 57680,
-    "accepted_attempts": 57563,
-    "verified_seller_inputs": 44768,
-    "verified_compressor_inputs": 12078,
-    "reparsed_current_outputs": 56873,
-    "verified_subscription_requests": 0,
-    "accepted_subscription_attempts": 0
+    "rounds": 26134,
+    "memory_entries": 48582,
+    "attempts": 68150,
+    "accepted_attempts": 67866,
+    "verified_seller_inputs": 51612,
+    "verified_compressor_inputs": 15552,
+    "reparsed_current_outputs": 67176,
+    "verified_subscription_requests": 10470,
+    "accepted_subscription_attempts": 10303
   },
   "spending": {
     "spent": 42.15208822,
