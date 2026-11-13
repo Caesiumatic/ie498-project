@@ -27,7 +27,10 @@ def snapshot(store, destination):
             if rel and (store.root/rel).exists():
                 (dest/rel).parent.mkdir(parents=True,exist_ok=True)
                 shutil.copy2(store.root/rel,dest/rel)
-    commits=[r[0] for r in db.execute('SELECT DISTINCT commit_hash FROM runs')];db.close()
+    commits={r[0] for r in db.execute('SELECT DISTINCT commit_hash FROM runs')}
+    if db.execute("SELECT name FROM sqlite_master WHERE name='execution_epochs'").fetchone():
+        commits.update(r[0] for r in db.execute('SELECT DISTINCT commit_hash FROM execution_epochs'))
+    commits=sorted(commits);db.close()
     manifest={"source":str(store.root.resolve()),"code_commits":commits,"independent_backup":False,
               "files":{str(p.relative_to(dest)):file_hash(p) for p in dest.rglob('*') if p.is_file()}}
     atomic_json(dest/'manifest.json',manifest)
