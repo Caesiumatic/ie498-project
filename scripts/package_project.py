@@ -14,11 +14,47 @@ from ie498.backup import snapshot, restore, file_hash
 from ie498.runner import coordinator_lock
 
 
+def require_completed_extension(store, freeze):
+    if not freeze.exists():return
+    planned=json.loads(freeze.read_text())['runs']
+    ids=[run['id'] for run in planned]
+    if not ids or len(ids)!=len(set(ids)):
+        raise ValueError('Frozen extension must contain distinct planned run IDs')
+    incomplete=[]
+    for run in planned:
+        target=run['config']['T']
+        if type(target) is not int or target<=0:
+            raise ValueError(f"Invalid frozen horizon for {run['id']}")
+        rows=store.rows('''SELECT r.status, COUNT(q.t) n, MIN(q.t) first_t, MAX(q.t) last_t
+                          FROM runs r LEFT JOIN rounds q ON q.run_id=r.id
+                          WHERE r.id=? GROUP BY r.id''',(run['id'],))
+        if not rows:
+            incomplete.append(f"{run['id']}: missing")
+        else:
+            row=rows[0]
+            if row['status']!='completed' or (row['n'],row['first_t'],row['last_t'])!=(target,1,target):
+                incomplete.append(f"{run['id']}: {row['status']}, {row['n']}/{target} rounds")
+    if incomplete:
+        raise ValueError('Complete the frozen extension before packaging: '+'; '.join(incomplete))
+
+
+def reject_secret_path(path, name):
+    # Check both the archive name and a resolved source, before opening a file.
+    for candidate in (Path(name),Path(path).resolve()):
+        parts=candidate.parts
+        if any(part in {'.codex','.aws','.ssh','.git'} for part in parts) or any(
+                pair==('data','auth') for pair in zip(parts,parts[1:])):
+            raise ValueError(f'Credential directory cannot be packaged: {name}')
+        if candidate.name=='.env' or candidate.name.startswith('.env.') and candidate.name!='.env.example':
+            raise ValueError('Secret file cannot be packaged')
+
+
 def main():
     store=Store(ROOT/'data/runs/live')
     with coordinator_lock(store):
         pending=store.rows("SELECT COUNT(*) n FROM api_attempts WHERE status='pending'")[0]['n']
         if pending:raise ValueError('Reconcile interrupted requests before final packaging')
+        require_completed_extension(store,ROOT/'configs/extension-freeze.json')
         snap=snapshot(store,ROOT/'data/backups/batches')
         verified=ROOT/'data/restored'/snap.name
         restore(snap,verified)
@@ -34,8 +70,7 @@ def main():
         checksums={}
         with zipfile.ZipFile(temporary,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
             def add(path,name):
-                if Path(name).name=='.env' or Path(name).name.startswith('.env.') and Path(name).name!='.env.example':
-                    raise ValueError('Secret file cannot be packaged')
+                reject_secret_path(path,name)
                 digest=hashlib.sha256();carry=b''
                 with path.open('rb') as source, archive.open('ie498/'+name,'w',force_zip64=True) as target:
                     for chunk in iter(lambda:source.read(1024*1024),b''):

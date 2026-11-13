@@ -1,0 +1,82 @@
+{
+  "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
+  "code_commit": "763de9d801d83d512e2ffca724f0d4e7c25df568",
+  "candidates": [
+    {
+      "parent": "formation-r1-h100-full",
+      "status": "completed",
+      "eligible": false,
+      "window_metrics": {
+        "n_eval": 50,
+        "price_0": 1.4698,
+        "price_1": 1.4689999999999999,
+        "profit_0": 22.127343727673125,
+        "profit_1": 22.15944983902039,
+        "joint_profit": 44.286793566693525,
+        "CI": -0.013029353111132553,
+        "price_std": 0.002502775637731997,
+        "price_gap": 0.001200000000000001,
+        "price_fraction": 0.0,
+        "price_success": false,
+        "profit_success": false,
+        "effective_success": false
+      },
+      "selected": false
+    },
+    {
+      "parent": "formation-r2-h100-full",
+      "status": "completed",
+      "eligible": false,
+      "window_metrics": {
+        "n_eval": 50,
+        "price_0": 3.4499999999999993,
+        "price_1": 3.44,
+        "profit_0": 0.7371960243526086,
+        "profit_1": 0.7641498033488554,
+        "joint_profit": 1.5013458277014642,
+        "CI": -1.880349044577541,
+        "price_std": 1.5543122344752192e-15,
+        "price_gap": 0.010000000000000231,
+        "price_fraction": 1.0,
+        "price_success": true,
+        "profit_success": false,
+        "effective_success": false
+      },
+      "selected": false
+    },
+    {
+      "parent": "formation-r3-h100-full",
+      "status": "completed",
+      "eligible": false,
+      "window_metrics": {
+        "n_eval": 50,
+        "price_0": 4.009999999999999,
+        "price_1": 4.009999999999999,
+        "profit_0": 0.09695249667099784,
+        "profit_1": 0.09695249667099784,
+        "joint_profit": 0.19390499334199568,
+        "CI": -1.9374107359806614,
+        "price_std": 1.7763568394002505e-15,
+        "price_gap": 0.0,
+        "price_fraction": 1.0,
+        "price_success": true,
+        "profit_success": false,
+        "effective_success": false
+      },
+      "selected": false
+    }
+  ],
+  "runs": [],
+  "branch_choices": {
+    "clear_H": 1,
+    "compressed_H": 5
+  },
+  "reserved_estimate_usd": 0.0,
+  "balance_at_plan": {
+    "spent": 30.655608970000003,
+    "reserved": 0.027837124999999997,
+    "budget": null
+  },
+  "selection_order": "Ascending parent run ID, eligibility then budget only",
+  "shock_assignment": "Alternate agent 0/1 among selected parents; share the prespecified first actions"
+}

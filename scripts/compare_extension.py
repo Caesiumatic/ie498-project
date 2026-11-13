@@ -1,6 +1,7 @@
 """Compare the original and extended samples using saved run-level results only.
 
-Run after make_report.py has refreshed reports/live/runs.csv. No API access.
+Run after the analysis command has refreshed reports/live/runs.csv and before
+make_report.py embeds this comparison. No API access.
 Incomplete input is rejected so partial samples cannot masquerade as the final
 five-repeat extension. The original and full samples overlap; comparisons are
 strictly descriptive, without post hoc significance tests.

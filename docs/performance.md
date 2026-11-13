@@ -1,6 +1,6 @@
 # Execution performance audit
 
-Audit date: 2026-11-13. Measurements below use the completed live database and local raw-response file metadata. No model calls were made for this audit.
+Audit date: 2026-11-13. Baseline measurements below use the completed original three-repeat database and local raw-response file metadata. No model calls were made for this audit.
 
 ## Observed bottleneck
 
@@ -32,6 +32,10 @@ The extension coordinator overlaps independent unfinished runs, including repeat
 
 The HTTP client's maximum total and idle connection counts now equal the caller's concurrency. At 48 concurrent calls, this allows up to 48 reusable connections instead of the previous default cap of 20 idle connections. It avoids unnecessary connection disposal when more independent work is available; it does not promise a measured speedup by itself.
 
-Request bodies, prompts, model/reasoning/output settings, memory visibility, economic settlement, retry policy, timeout values, cost reservations, response persistence, and run-level statistical units are unchanged. The shared token limiter stays at 30,000 tokens/second with the same burst and provider-backoff behavior. Existing completed runs are not rerun or rewritten. Disk durability and raw-file integrity checks remain enabled.
+These scheduling changes preserve request bodies, prompts, model/reasoning/output settings, memory visibility, economic settlement, retry policy, timeout values, cost reservations, response persistence, and run-level statistical units. The shared token limiter stays at 30,000 tokens/second with the same burst and provider-backoff behavior. Existing completed runs are not rerun or rewritten. Disk durability and raw-file integrity checks remain enabled.
 
 Compare extension wall-clock timings with these baseline measurements after completion. A precise causal speedup would require a separate controlled benchmark; do not attribute differences in model latency or output lengths solely to the scheduler.
+
+## Later subscription-interface continuation
+
+After 7,078 extension rounds, API credit exhaustion interrupted execution. The remaining 3,422 rounds resumed through the separately authorized ChatGPT subscription Responses interface. That later change preserves model, reasoning level, original prompt text, and memory rules, but omits the unsupported output-token caps and Chat Completions transport controls. It is distinct from the scheduling changes above. The combined extension duration includes the access pause and two interfaces; its throughput ratio cannot estimate the scheduling speedup. Subscription rate-limit responses use the same bounded retry policy and server-directed backoff. See `reports/extension_execution.json` for recorded resources and [subscription_continuation.md](subscription_continuation.md) for the interface details.
