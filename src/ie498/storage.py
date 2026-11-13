@@ -135,7 +135,7 @@ class Store:
             if architecture == "bullet_memory":
                 for agent, action in enumerate(actions):
                     self.db.execute("INSERT INTO memory_entries VALUES(?,?,?,?,?)",
-                                    (run,t,agent,action["memory_bullet"],f"{run}:{t}:{agent}:seller"))
+                                    (run,t,agent,action["memory_bullet"],payload.get('action_call_ids',[f'{run}:{t}:0:seller',f'{run}:{t}:1:seller'])[agent]))
 
     def fork(self, parent, child, checkpoint, config, commit, prompts):
         source = self.rows("SELECT * FROM runs WHERE id=?", (parent,))[0]

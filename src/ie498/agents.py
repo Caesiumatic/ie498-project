@@ -37,17 +37,22 @@ def request_body(config, prompt, purpose):
             "reasoning_effort": config.get('reasoning_effort','low'), "store": False, "service_tier":"default"}
     if config.get('temperature') is not None:
         body['temperature']=config['temperature']
-    if config.get('cache_mode')=='explicit_prefix':
+    if config.get('cache_mode')=='off':
+        body['prompt_cache_options']={'mode':'explicit','ttl':'30m'}
+    if config.get('cache_mode') in ('explicit_prefix','explicit_blocks'):
         body['prompt_cache_options']={'mode':'explicit','ttl':'30m'}
         # Text concatenates exactly to the original independent user message.
         # Reuse only archive prefixes; never reuse sampled outputs or hidden reasoning.
         eligible=purpose=='compressor' or (config['architecture']=='bullet_memory' and config['mode']=='full')
-        ends=[m.end() for m in re.finditer(r'(?m)^- [^\n]*',prompt)][-2:] if eligible else []
+        ends=[m.end() for m in re.finditer(r'(?m)^- [^\n]*',prompt)] if eligible else []
+        marked=ends[-2:]
+        if config['cache_mode']=='explicit_prefix':ends=marked
         if ends:
             parts=[];start=0
             for end in ends:
-                parts.append({'type':'text','text':prompt[start:end],
-                              'prompt_cache_breakpoint':{'mode':'explicit'}})
+                part={'type':'text','text':prompt[start:end]}
+                if end in marked:part['prompt_cache_breakpoint']={'mode':'explicit'}
+                parts.append(part)
                 start=end
             if start<len(prompt):parts.append({'type':'text','text':prompt[start:]})
             assert ''.join(p['text'] for p in parts)==prompt

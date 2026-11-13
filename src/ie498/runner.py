@@ -4,7 +4,7 @@ import json
 import subprocess
 from contextlib import contextmanager
 
-from .agents import Caller, PermanentAPIError
+from .agents import Caller, PermanentAPIError, request_body
 from .environment import Market
 from .memory import ROOT, TOKEN_MEASURE, build_compressor, build_seller, digest, prompt_hash, tokens, visible_history
 from .storage import BudgetStop
@@ -83,7 +83,18 @@ async def run_one(store, caller, run, stop_event):
                 if isinstance(p, BaseException):
                     raise p
             # Both immutable request texts exist before either seller starts.
-            actions = await asyncio.gather(*(caller.call(run,t,i,"seller",prompts[i],c) for i in range(2)), return_exceptions=True)
+            action_calls=[f'{run}:{t}:{i}:seller' for i in range(2)]
+            if c.get('share_parent_first_actions') and t==metadata['checkpoint']+1:
+                if not c.get('shock') or not metadata['parent']:
+                    raise ValueError('Shared first actions require a shock branch and parent')
+                actions=[]
+                for i in range(2):
+                    source_call=f"{metadata['parent']}:{t}:{i}:seller"
+                    accepted=store.accepted(source_call,digest(request_body(c,prompts[i],'seller')))
+                    if accepted is None:raise ValueError('Matching parent action unavailable')
+                    actions.append(accepted);action_calls[i]=source_call
+            else:
+                actions = await asyncio.gather(*(caller.call(run,t,i,"seller",prompts[i],c) for i in range(2)), return_exceptions=True)
             for a in actions:
                 if isinstance(a, BaseException):
                     raise a
@@ -97,7 +108,7 @@ async def run_one(store, caller, run, stop_event):
             q, profits = Market().settle(executed)
             payload = {"t":t,"proposed_prices":proposed,"prices":executed,"quantities":q.tolist(),
                        "profits":profits.tolist(),"shock_flags":flags,"ceiling_exceeded":[p>4.51 for p in executed],
-                       "actions":actions}
+                       "actions":actions,"action_call_ids":action_calls}
             store.commit_round(run,payload,actions,c["architecture"])
             history.append(payload)
             if t % 25 == 0 or t == c["T"]:

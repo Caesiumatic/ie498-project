@@ -137,8 +137,9 @@ def test_structured_sentence_constraint(config):
         assert not re.fullmatch(pattern,invalid)
 
 
-def test_cache_segmentation_does_not_change_information(config):
-    c=dict(config,mode='full',cache_mode='explicit_prefix')
+@pytest.mark.parametrize('cache_mode',['explicit_prefix','explicit_blocks'])
+def test_cache_segmentation_does_not_change_information(config,cache_mode):
+    c=dict(config,mode='full',cache_mode=cache_mode)
     prompt=build_seller(c,'', '- I will test $1.50.\n- I will next test $1.75.')
     body=request_body(c,prompt,'seller')
     parts=body['messages'][0]['content']
@@ -170,3 +171,15 @@ def test_fork_metrics_backup_analysis(store,config,tmp_path):
 def test_balanced_plan():
     plan=plan_conditions(3);assert len(plan)==45
     for rep in (1,2,3):assert len({(r['H'],r['mode']) for r in plan if r['repetition']==rep})==15
+
+
+def test_shock_shares_only_prespecified_first_actions(store,config):
+    c=dict(config,T=6);create_run(store,'source',c);asyncio.run(run_batch(store,['source']))
+    child=dict(c,T=8,stage='shock',share_parent_first_actions=True,shock={'t':4,'agent':0,'factor':.9})
+    store.fork('source','shock-shared',3,child,git_commit(),prompt_hash())
+    asyncio.run(run_batch(store,['shock-shared']))
+    source=store.history('source')[3];shocked=store.history('shock-shared')[3]
+    assert shocked['actions']==source['actions']
+    assert shocked['prices'][0]==source['prices'][0]*.9 and shocked['prices'][1]==source['prices'][1]
+    assert shocked['action_call_ids']==['source:4:0:seller','source:4:1:seller']
+    assert len(store.rows("SELECT * FROM api_attempts WHERE run_id='shock-shared'"))==8

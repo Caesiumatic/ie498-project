@@ -1,11 +1,12 @@
 # 当前阶段
 
-- 离线实现：完成。
-- 关键测试：16项通过。
-- Mock：15个记忆条件与paper_reference各8轮，共16个run；已完成导出、绘图、一致性快照与恢复检查。
-- 真实smoke：GPT‑6 Luna完成bullet/compressor两轮和paper_reference一轮；8个调用有效，费用$0.001045。
-- 完整pilot：6个300轮run运行中；与正式样本分开保存。
-- Formation：待完整pilot成本与行为检查后冻结重复数。
-- Maintenance/shock：实现完成；主矩阵之后按剩余预算和合格parent执行。
+- 代码、协议、恢复、分析与备份流程完成；20项关键测试通过。
+- 原始mock：16个配置各8轮，快照恢复验证通过。
+- v1.0 pilot：格式筛选后停止，数据与失败全部保留。
+- v1.1 full-1：300轮完成，final50 CI≈0.996，有效成功。
+- v1.1 clear、compressed、paper：继续运行；两个可选full pilot因预算优先级停止，未作为完成样本。
+- 所有真实卖家与压缩器均为GPT‑6 Luna low。
+- Formation：等待完整clear/compressed成本；用scripts/freeze_plan.py按成本冻结均衡重复数，再运行scripts/run_formation.py。
+- 主矩阵优先；maintenance/shock只对合格parent用剩余预算执行。
 
-实时状态以 `ie498 --data data/runs/live status` 和SQLite为准。此文件在阶段完成后更新。
+实时状态以SQLite与CLI status为准。密钥不进入Git、报告或交付包。

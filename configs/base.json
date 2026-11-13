@@ -28,5 +28,7 @@
   "ci_threshold": 0.5,
   "reasoning_effort": "low",
   "output_limit": 2048,
-  "paper_output_limit": 4096
+  "paper_output_limit": 4096,
+  "cache_mode": "off",
+  "transport_version": "stateless-single-message-no-cache-write-v1"
 }

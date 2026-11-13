@@ -50,7 +50,7 @@ def main():
     p=sub.add_parser('resume');p.add_argument('runs',nargs='*');p.add_argument('--concurrency',type=int,default=8)
     p=sub.add_parser('fork');p.add_argument('parent');p.add_argument('child');p.add_argument('--checkpoint',type=int,default=200)
     p.add_argument('--H',type=int,default=1);p.add_argument('--mode',choices=['clear','full','compressed'],default='clear')
-    p.add_argument('--shock-agent',type=int,choices=[0,1]);p.add_argument('--run',action='store_true')
+    p.add_argument('--shock-agent',type=int,choices=[0,1]);p.add_argument('--share-actions',action='store_true');p.add_argument('--run',action='store_true')
     p=sub.add_parser('analyze');p.add_argument('--out',default=str(ROOT/'reports/live'))
     p=sub.add_parser('snapshot');p.add_argument('--out',default=str(ROOT/'data/backups'))
     p=sub.add_parser('restore');p.add_argument('source');p.add_argument('destination')
@@ -74,6 +74,7 @@ def main():
             child.pop('shock',None)
             if args.shock_agent is not None:
                 child.update(stage='shock',shock={'t':args.checkpoint+1,'agent':args.shock_agent,'factor':.9})
+                if args.share_actions:child['share_parent_first_actions']=True
             store.fork(args.parent,args.child,args.checkpoint,child,git_commit(),prompt_hash())
             if args.run:asyncio.run(run_batch(store,[args.child]))
             print(args.child);return

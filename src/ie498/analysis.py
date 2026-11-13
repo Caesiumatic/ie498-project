@@ -54,7 +54,7 @@ def analyze(store,destination):
         row={k:run[k] for k in ('id','status','error','parent','checkpoint','commit_hash','prompt_hash')}
         row.update({k:c[k] for k in ('stage','provider','model','architecture','H','mode','T')})
         row['rounds_completed']=len(history);row['new_rounds']=len(owned)
-        row.update(metrics(owned,c['evaluation_window']))
+        row.update(metrics(owned,c['evaluation_window'],c['epsilon_price'],c['ci_threshold'],c['price_fraction']))
         row['eligible_primary']=run['status']=='completed' and c['stage']=='formation' and c['provider']=='openai' and len(owned)==c['T']
         summary.append(row)
         for r in owned:
