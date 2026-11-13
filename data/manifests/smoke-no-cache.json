@@ -1,0 +1,81 @@
+{
+  "stage": "smoke",
+  "code_commit": "0ce962dea468d33f92015424f0abf45006065d5f",
+  "prompt_hash": "d84cd086cb4c036a25661416b5b82e2dd7fa62bf7e3f26c80af604c935baa08a",
+  "runs": [
+    {
+      "id": "smoke-no-cache-bullet",
+      "config": {
+        "protocol_version": "1.1",
+        "architecture": "bullet_memory",
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "stage": "smoke",
+        "H": 0,
+        "mode": "compressed",
+        "T": 2,
+        "temperature": null,
+        "max_attempts": 3,
+        "context_limit": 1050000,
+        "evaluation_window": 50,
+        "budget_usd": 15.0,
+        "prices": {
+          "input": 0.1,
+          "cached_input": 0.01,
+          "cache_write": 0.125,
+          "output": 0.5
+        },
+        "pricing_version": "openai-gpt-6-luna-standard-2026-11-12",
+        "model_verified": true,
+        "local_seed": 498,
+        "analysis_seed": 498,
+        "provider_seed": null,
+        "epsilon_price": 0.02,
+        "price_fraction": 0.8,
+        "ci_threshold": 0.5,
+        "reasoning_effort": "low",
+        "output_limit": 2048,
+        "paper_output_limit": 4096,
+        "cache_mode": "off",
+        "transport_version": "stateless-single-message-no-cache-write-v1"
+      }
+    },
+    {
+      "id": "smoke-no-cache-paper",
+      "config": {
+        "protocol_version": "1.1",
+        "architecture": "paper_reference",
+        "provider": "openai",
+        "model": "gpt-6-luna",
+        "stage": "smoke",
+        "H": 100,
+        "mode": "full",
+        "T": 1,
+        "temperature": null,
+        "max_attempts": 3,
+        "context_limit": 1050000,
+        "evaluation_window": 50,
+        "budget_usd": 15.0,
+        "prices": {
+          "input": 0.1,
+          "cached_input": 0.01,
+          "cache_write": 0.125,
+          "output": 0.5
+        },
+        "pricing_version": "openai-gpt-6-luna-standard-2026-11-12",
+        "model_verified": true,
+        "local_seed": 498,
+        "analysis_seed": 498,
+        "provider_seed": null,
+        "epsilon_price": 0.02,
+        "price_fraction": 0.8,
+        "ci_threshold": 0.5,
+        "reasoning_effort": "low",
+        "output_limit": 2048,
+        "paper_output_limit": 4096,
+        "cache_mode": "off",
+        "transport_version": "stateless-single-message-no-cache-write-v1"
+      }
+    }
+  ]
+}

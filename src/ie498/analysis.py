@@ -65,6 +65,7 @@ def analyze(store,destination):
         attempts=store.rows('SELECT * FROM api_attempts WHERE run_id=?',(run['id'],))
         views=[json.loads(r['payload']) for r in store.rows('SELECT payload FROM memory_views WHERE run_id=?',(run['id'],))]
         usage=[json.loads(a['usage'] or '{}') for a in attempts]
+        final_archives=[store.archive(run['id'],i) for i in range(2)]
         for entry in store.rows('SELECT t,agent,text,call_id FROM memory_entries WHERE run_id=? AND t>? ORDER BY t,agent',(run['id'],run['checkpoint'])):
             memory_audit.append(dict(run=run['id'],**entry,word_count=len(entry['text'][2:].split()),utf8_bytes=len(entry['text'].encode())))
         resources.append(dict(run=run['id'],stage=c['stage'],calls=len(attempts),
@@ -78,6 +79,9 @@ def analyze(store,destination):
             cost_usd=sum(a['cost'] for a in attempts),
             history_token_upper_bound=sum(v['history_tokens'] for v in views),memory_token_upper_bound=sum(v['memory_tokens'] for v in views),
             max_archive_token_upper_bound=max((v['archive_tokens'] for v in views),default=0),
+            final_archive_entries=sum(len(a) for a in final_archives),
+            final_archive_bytes=sum(len('\n'.join(a).encode()) for a in final_archives),
+            max_visible_memory_words=max((sum(len((line[2:] if line.startswith('- ') else line).split()) for line in v['text'].splitlines()) for v in views),default=0),
             compressor_input_tokens=sum(json.loads(a['usage'] or '{}').get('prompt_tokens',0) for a in attempts if a['purpose']=='compressor')))
         if row['eligible_primary']:
             for eps in (.01,.02,.04):

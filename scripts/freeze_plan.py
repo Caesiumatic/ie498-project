@@ -44,12 +44,13 @@ def main():
     balance=store.spending();paper_left=max(0,300-len(store.history('pilot-v11-paper')))
     paper_reserve=paper_left*.003
     available=balance['budget']-balance['spent']-balance['reserved']-paper_reserve-.1
-    repeats=min(3,int(available/(batch*1.1)))
+    safety=1.04
+    repeats=min(3,int(available/(batch*safety)))
     if repeats<1:raise ValueError(f'Balanced batch needs estimated ${batch:.4f}; available ${available:.4f}')
     result={'protocol_version':'1.1','config':base,'prompt_hash':prompt_hash(),'repeats':repeats,'desired_repeats':3,
-            'estimated_batch_cost_usd':batch,'batch_cost_safety_factor':1.1,'paper_cost_per_remaining_round':.003,
+            'estimated_batch_cost_usd':batch,'batch_cost_safety_factor':safety,'paper_cost_per_remaining_round':.003,
             'budget_at_freeze':balance,'pilot_sources':sources,'history_tokens_per_byte_projection':ratio,
-            'projection_method':'Accepted pilot usage, uncached standard rates; shorter H removes history input estimated from minimum observed clear-pilot token/byte ratio; memory/output lengths held fixed; 10% batch margin plus paper reserve.',
+            'projection_method':'Accepted pilot usage, uncached standard rates; shorter H removes history input estimated from minimum observed clear-pilot token/byte ratio; H100 memory/output lengths held fixed for all H; 4% batch margin plus separate paper reserve and $0.10 buffer.',
             'cells':cells,'sampling_decision_uses_behavior':False}
     atomic_json(ROOT/'configs/formation-freeze.json',result)
     print(json.dumps(result,indent=2));store.close()
