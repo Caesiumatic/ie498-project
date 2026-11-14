@@ -1,0 +1,19 @@
+{
+  "schema": "ie498-paper-report-build-v1",
+  "created_utc": "2026-11-14T02:07:27.563598+00:00",
+  "complete": true,
+  "complete_runs": 6,
+  "saved_periods": 1800,
+  "source_manifest_sha256": "e19deb7faffaa6523ccf13bc7c89f75051fac0747f8f23ec90b077b5d3407b2c",
+  "data_fingerprint": "1bd3859a77dd1be22f268101eec9e7f82cbf2223a4256caf61aa1246fc007ca0",
+  "accepted_fingerprint": "bbc5f8a55e47ebb10eb24daf30c9ede1c894e664feb9b4e545f2026a087c13b1",
+  "execution_fingerprint": "ba3547e550805ed1f9a0d9e20f763eb20ea2362120fd81fc49268bdfe22c3898",
+  "files": {
+    "report.md": "1d1f3fdc270687dd6e1f16372db34065e60242de2d39490f1d56d771dbe14f28",
+    "run_summary.csv": "d414d8759bcdaf6bdde8e069c4154fe61a76665f74c7cf25a11394dbe1e43621",
+    "rounds.csv": "d9a9983eef3e98a15a88086e8c4426d1933d2fbebd6123af2053e34d5651b812",
+    "trajectories.png": "0037265d6d09046e453013f15625aadf8607c9937f23d134e9c5950fd1d8fbb9",
+    "final50.png": "0e0bdee336ae7feac7efb1f44ecb4cadae50514042e31a153287bad71bb114f0",
+    "protocol_manifest.json": "460d7431ba54ad54023a6421cbec377bd228f215ac363fc884418debeb5762b8"
+  }
+}

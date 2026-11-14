@@ -1,0 +1,210 @@
+{
+  "export_schema": "ie498-paper-scientific-manifest-v1",
+  "source_manifest_available": true,
+  "source_manifest_sha256": "e19deb7faffaa6523ccf13bc7c89f75051fac0747f8f23ec90b077b5d3407b2c",
+  "prompt_hash": "c98c036576ff7593ade04485ed40888e57c505dbaff0b1fde84f3f4a224e2c48",
+  "transport": "chatgpt_subscription",
+  "source_hashes": {
+    "docs/sources/paper-v6.pdf": "ca3b9ca28ccaa40e550d848cfe4d641a470b073b22adc34c584f9b19a6228482",
+    "src/ie498/paper_replication.py": "eac558e0c3056a04cdc874f84838cd2db055953b0563468269fc9dbe2cf54539",
+    "src/ie498/paper_execution.py": "c88b903784acf6e733f31151e5874c643ca4d199b10b63ff05bf20cc0f615a06",
+    "src/ie498/environment.py": "5bd893a48b55de4d8499191f0d0c4b3fdcb25d66f0c2a9d3069d052698baa69c",
+    "src/ie498/storage.py": "e7151c44fb631b5859c0837b1af207625ec5bb517c88a34addabaf8e46ecfe83",
+    "src/ie498/subscription_transport.py": "9d99c7a5ee3e2b9c2699d9772048fe081f748c5258a7eb2e1c52f2af7cd7b9f8",
+    "src/ie498/subscription_auth.py": "673d502c7474d69bebfd2d01d76855ac53c2b9cba7532c4693bcea46e2c3548b",
+    "experiments/paper_replication/prompts/p0.txt": "bed5da27cb0b3d037b75464adec3486166935ad8fe851123d365779f847c635a",
+    "experiments/paper_replication/prompts/p1.txt": "1f93fb37653c30bd0f378572b54d08fead7af8db82b4ca63250fdbf089dcdabd",
+    "experiments/paper_replication/prompts/p2.txt": "961ab7ee6f720812fb24d73aa3cdfccc94ac4a068e0ea2f83e929c25f5e1ebcc",
+    "experiments/paper_replication/prompts/template.txt": "db7c65dc0ba471395c3987a7cd62c3aabf00e5b48c6096fb12ff0b52ab21a45f"
+  },
+  "sampling_limitations": [
+    "Subscription interface prohibits explicit temperature and top_p.",
+    "Server defaults are observed per response, not assumed equal to the paper."
+  ],
+  "reconstruction_limitations": [
+    "No official implementation repository identified; exact original formatting/parser unspecified.",
+    "Footnote 18 ceiling formula takes priority over the slightly inconsistent worked example.",
+    "History uses str(round(value,2)); numerical actions are not rounded or clipped.",
+    "Reasoning none is a model-substitution setting; the original GPT-4 had no such parameter.",
+    "One trajectory per condition cannot reproduce the original between-run uncertainty."
+  ],
+  "protocol": "paper-core-six-conditions-v1",
+  "scope": "Section 3: P1/P2 x alpha 1,3.2,10, one run per cell",
+  "total_rounds": 1800,
+  "successful_seller_calls": 3600,
+  "request_concurrency": 12,
+  "code_commit": "12e5a4866a8168fd04c7b64a154a30abe41c7dec",
+  "created_utc": "2026-11-14T00:09:57.651971+00:00",
+  "pricing_source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+  "api_pricing_per_million_tokens": {
+    "input": 0.1,
+    "cached_input": 0.01,
+    "cache_write": 0.125,
+    "output": 0.5
+  },
+  "runs": [
+    {
+      "id": "paper-p1-a1-r1",
+      "config": {
+        "protocol": "paper-core-six-conditions-v1",
+        "architecture": "paper_replication",
+        "prefix": "P1",
+        "alpha": 1.0,
+        "ceiling_policy": "footnote_18",
+        "T": 300,
+        "H": 100,
+        "model": "gpt-6-luna",
+        "reasoning_effort": "none",
+        "transport": "chatgpt_subscription",
+        "temperature": null,
+        "top_p": null,
+        "maximum_consecutive_malformed_outputs": 10,
+        "transport_failures_before_pause": 3,
+        "budget_usd": null
+      }
+    },
+    {
+      "id": "paper-p1-a3p2-r1",
+      "config": {
+        "protocol": "paper-core-six-conditions-v1",
+        "architecture": "paper_replication",
+        "prefix": "P1",
+        "alpha": 3.2,
+        "ceiling_policy": "footnote_18",
+        "T": 300,
+        "H": 100,
+        "model": "gpt-6-luna",
+        "reasoning_effort": "none",
+        "transport": "chatgpt_subscription",
+        "temperature": null,
+        "top_p": null,
+        "maximum_consecutive_malformed_outputs": 10,
+        "transport_failures_before_pause": 3,
+        "budget_usd": null
+      }
+    },
+    {
+      "id": "paper-p1-a10-r1",
+      "config": {
+        "protocol": "paper-core-six-conditions-v1",
+        "architecture": "paper_replication",
+        "prefix": "P1",
+        "alpha": 10.0,
+        "ceiling_policy": "footnote_18",
+        "T": 300,
+        "H": 100,
+        "model": "gpt-6-luna",
+        "reasoning_effort": "none",
+        "transport": "chatgpt_subscription",
+        "temperature": null,
+        "top_p": null,
+        "maximum_consecutive_malformed_outputs": 10,
+        "transport_failures_before_pause": 3,
+        "budget_usd": null
+      }
+    },
+    {
+      "id": "paper-p2-a1-r1",
+      "config": {
+        "protocol": "paper-core-six-conditions-v1",
+        "architecture": "paper_replication",
+        "prefix": "P2",
+        "alpha": 1.0,
+        "ceiling_policy": "footnote_18",
+        "T": 300,
+        "H": 100,
+        "model": "gpt-6-luna",
+        "reasoning_effort": "none",
+        "transport": "chatgpt_subscription",
+        "temperature": null,
+        "top_p": null,
+        "maximum_consecutive_malformed_outputs": 10,
+        "transport_failures_before_pause": 3,
+        "budget_usd": null
+      }
+    },
+    {
+      "id": "paper-p2-a3p2-r1",
+      "config": {
+        "protocol": "paper-core-six-conditions-v1",
+        "architecture": "paper_replication",
+        "prefix": "P2",
+        "alpha": 3.2,
+        "ceiling_policy": "footnote_18",
+        "T": 300,
+        "H": 100,
+        "model": "gpt-6-luna",
+        "reasoning_effort": "none",
+        "transport": "chatgpt_subscription",
+        "temperature": null,
+        "top_p": null,
+        "maximum_consecutive_malformed_outputs": 10,
+        "transport_failures_before_pause": 3,
+        "budget_usd": null
+      }
+    },
+    {
+      "id": "paper-p2-a10-r1",
+      "config": {
+        "protocol": "paper-core-six-conditions-v1",
+        "architecture": "paper_replication",
+        "prefix": "P2",
+        "alpha": 10.0,
+        "ceiling_policy": "footnote_18",
+        "T": 300,
+        "H": 100,
+        "model": "gpt-6-luna",
+        "reasoning_effort": "none",
+        "transport": "chatgpt_subscription",
+        "temperature": null,
+        "top_p": null,
+        "maximum_consecutive_malformed_outputs": 10,
+        "transport_failures_before_pause": 3,
+        "budget_usd": null
+      }
+    }
+  ],
+  "runtime_amendments": [
+    {
+      "date_utc": "2026-11-14T00:13:10.991795+00:00",
+      "change": "HTTP connection limit and request semaphore: 6 to 12",
+      "code_commit": "c64b1e687f09f93866bad25057388be01c576da9",
+      "unchanged_request_and_state_functions_verified": true,
+      "prior_manifest": "manifest.initial-concurrency6.json",
+      "checkpoints": {
+        "paper-p1-a1-r1": 8,
+        "paper-p1-a3p2-r1": 8,
+        "paper-p1-a10-r1": 8,
+        "paper-p2-a1-r1": 8,
+        "paper-p2-a3p2-r1": 7,
+        "paper-p2-a10-r1": 7
+      },
+      "old_source_hashes": {
+        "docs/sources/paper-v6.pdf": "ca3b9ca28ccaa40e550d848cfe4d641a470b073b22adc34c584f9b19a6228482",
+        "src/ie498/paper_replication.py": "eac558e0c3056a04cdc874f84838cd2db055953b0563468269fc9dbe2cf54539",
+        "src/ie498/paper_execution.py": "272adb5b7ffff37815b02ed9ff1d3a79dcecefe2900b70adabb1bbb8ae80d6fb",
+        "src/ie498/environment.py": "5bd893a48b55de4d8499191f0d0c4b3fdcb25d66f0c2a9d3069d052698baa69c",
+        "src/ie498/storage.py": "e7151c44fb631b5859c0837b1af207625ec5bb517c88a34addabaf8e46ecfe83",
+        "src/ie498/subscription_transport.py": "9d99c7a5ee3e2b9c2699d9772048fe081f748c5258a7eb2e1c52f2af7cd7b9f8",
+        "src/ie498/subscription_auth.py": "673d502c7474d69bebfd2d01d76855ac53c2b9cba7532c4693bcea46e2c3548b",
+        "experiments/paper_replication/prompts/p0.txt": "bed5da27cb0b3d037b75464adec3486166935ad8fe851123d365779f847c635a",
+        "experiments/paper_replication/prompts/p1.txt": "1f93fb37653c30bd0f378572b54d08fead7af8db82b4ca63250fdbf089dcdabd",
+        "experiments/paper_replication/prompts/p2.txt": "961ab7ee6f720812fb24d73aa3cdfccc94ac4a068e0ea2f83e929c25f5e1ebcc",
+        "experiments/paper_replication/prompts/template.txt": "db7c65dc0ba471395c3987a7cd62c3aabf00e5b48c6096fb12ff0b52ab21a45f"
+      },
+      "new_source_hashes": {
+        "docs/sources/paper-v6.pdf": "ca3b9ca28ccaa40e550d848cfe4d641a470b073b22adc34c584f9b19a6228482",
+        "src/ie498/paper_replication.py": "eac558e0c3056a04cdc874f84838cd2db055953b0563468269fc9dbe2cf54539",
+        "src/ie498/paper_execution.py": "c88b903784acf6e733f31151e5874c643ca4d199b10b63ff05bf20cc0f615a06",
+        "src/ie498/environment.py": "5bd893a48b55de4d8499191f0d0c4b3fdcb25d66f0c2a9d3069d052698baa69c",
+        "src/ie498/storage.py": "e7151c44fb631b5859c0837b1af207625ec5bb517c88a34addabaf8e46ecfe83",
+        "src/ie498/subscription_transport.py": "9d99c7a5ee3e2b9c2699d9772048fe081f748c5258a7eb2e1c52f2af7cd7b9f8",
+        "src/ie498/subscription_auth.py": "673d502c7474d69bebfd2d01d76855ac53c2b9cba7532c4693bcea46e2c3548b",
+        "experiments/paper_replication/prompts/p0.txt": "bed5da27cb0b3d037b75464adec3486166935ad8fe851123d365779f847c635a",
+        "experiments/paper_replication/prompts/p1.txt": "1f93fb37653c30bd0f378572b54d08fead7af8db82b4ca63250fdbf089dcdabd",
+        "experiments/paper_replication/prompts/p2.txt": "961ab7ee6f720812fb24d73aa3cdfccc94ac4a068e0ea2f83e929c25f5e1ebcc",
+        "experiments/paper_replication/prompts/template.txt": "db7c65dc0ba471395c3987a7cd62c3aabf00e5b48c6096fb12ff0b52ab21a45f"
+      }
+    }
+  ]
+}

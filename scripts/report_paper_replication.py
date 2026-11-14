@@ -475,7 +475,7 @@ def plot_trajectories(summary, histories, destination):
 def plot_endpoints(summary, destination):
     complete = summary[summary.complete]
     benchmark = PaperCondition("P1", 1.0, "footnote_18").market.benchmarks()
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6.8))
     panels = (
         ("price", "mean_normalized_price_firm1", "mean_normalized_price_firm2",
          "Mean normalized prices", "Firm 1: mean price / alpha", "Firm 2: mean price / alpha"),
@@ -538,7 +538,8 @@ def plot_endpoints(summary, destination):
                         arrowprops={"arrowstyle": "-", "lw": .4, "color": "#aaaaaa"})
         ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
         ax.grid(alpha=.15)
-        ax.legend(fontsize=8, loc="best")
+        ax.legend(fontsize=8, loc="upper center", bbox_to_anchor=(.5, -.2),
+                  ncol=2, frameon=False)
     qualifier = "complete suite" if len(complete) == len(EXPECTED) else f"INCOMPLETE suite: {len(complete)}/6 endpoints"
     fig.suptitle(f"Periods 251–300 | {qualifier} | descriptive observations only")
     fig.tight_layout(rect=(0, 0, 1, .95))
@@ -617,7 +618,7 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
         "completed response; it is not counted as a malformed completed output. `pending` "
         "marks unresolved attempts at the snapshot, and `other` combines remaining saved "
         "statuses, such as a protocol error. Raw error text is not published in this table.\n",
-        "Failures with unknown usage counts only non-accepted, non-pending attempts whose "
+        "The final column counts only non-accepted, non-pending attempts whose "
         "saved `usage_unknown` flag is true; it is a subset of the failure columns, not an "
         "additional attempt category. No missing usage is estimated. Accepted responses are "
         "retained and reused only to recover the same logical call; an already accepted "

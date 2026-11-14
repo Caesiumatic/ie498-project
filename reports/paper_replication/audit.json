@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "checked_calls": 3600,
+  "protocol": "paper-core-six-conditions-v1",
+  "runs": [
+    {
+      "id": "paper-p1-a1-r1",
+      "status": "completed",
+      "error": null,
+      "rounds": 300
+    },
+    {
+      "id": "paper-p1-a10-r1",
+      "status": "completed",
+      "error": null,
+      "rounds": 300
+    },
+    {
+      "id": "paper-p1-a3p2-r1",
+      "status": "completed",
+      "error": null,
+      "rounds": 300
+    },
+    {
+      "id": "paper-p2-a1-r1",
+      "status": "completed",
+      "error": null,
+      "rounds": 300
+    },
+    {
+      "id": "paper-p2-a10-r1",
+      "status": "completed",
+      "error": null,
+      "rounds": 300
+    },
+    {
+      "id": "paper-p2-a3p2-r1",
+      "status": "completed",
+      "error": null,
+      "rounds": 300
+    }
+  ],
+  "rounds": 1800,
+  "accepted_calls": 3600,
+  "api_cash_cost_usd_recorded": 0.0,
+  "unknown_usage_attempts": 26
+}
