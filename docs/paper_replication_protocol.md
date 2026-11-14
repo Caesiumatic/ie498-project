@@ -1,8 +1,8 @@
 # Original-paper replication: protocol audit
 
-**Status: PREPARATION. No empirical runs have been generated for this new replication.**
+**Status: IMPLEMENTED; EXPERIMENTAL EXECUTION IN PROGRESS. The six runs began on 2026-11-14 UTC after offline verification and a frozen source/request manifest.**
 
-This document records a fresh reading of the source paper in response to the user's request to reproduce its method with GPT-6 Luna and a single repetition instead of the original repeated sample. The user has selected the six-condition main experiment and the Pro subscription route with reasoning `none`, explicitly accepting and recording that temperature and top_p cannot be set on that route. This is an audit and preparation document, not a claim that a strict replication has already been implemented.
+This document records a fresh reading of the source paper in response to the user's request to reproduce its method with GPT-6 Luna and a single repetition instead of the original repeated sample. The user has selected the six-condition main experiment and the Pro subscription route with reasoning `none`, explicitly accepting and recording that temperature and top_p cannot be set on that route. This is the implemented reconstruction contract; it does not claim byte-for-byte reproduction of unpublished author code.
 
 The new request supersedes the previous project's five-repeat design for this separate experiment. Existing experiments, reports, configurations, accepted responses, and checkpoints remain historical evidence. They must not be relabeled as the new replication or silently modified to satisfy its protocol.
 

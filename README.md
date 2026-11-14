@@ -4,6 +4,12 @@ This experiment tests how visible market history and strategic memory shape pric
 
 The runner records each decision, memory view, settlement, and API cost, and resumes interrupted runs by logical call ID. Start with the [results](reports/research_report.md), [research protocol](docs/protocol.md), or [current status](docs/status.md); the [decision log](docs/decisions.md) records protocol choices.
 
+## Independent core-paper reconstruction (in progress)
+
+A new, separate experiment follows the source paper's Section 3 design: **P1/P2 × alpha 1, 3.2, 10, one 300-period run per condition** (six runs, 1,800 planned periods). It uses GPT-6 Luna with reasoning `none`, the original free-form output task, overwritten private PLANS/INSIGHTS, H100, and the paper's final-50 normalized prices and profits. The user selected Pro subscription inference and accepted that temperature/top_p cannot be explicitly fixed; actual response settings are archived. Original implementation details not specified by the paper are documented as reconstruction choices.
+
+See the [source-based protocol](docs/paper_replication_protocol.md), [independent execution commands](experiments/paper_replication/README.md), and [author-code search receipt](docs/paper_replication_source_search.md). All 156 offline tests passed before delivery preparation. Execution data live separately under `data/runs/paper_replication/`; a completed report and raw-data archive will be generated after the fixed runs finish. This experiment does not relabel or pool any of the completed results below.
+
 ## Completed five-repeat experiment
 
 The frozen extension is complete: **75 bullet-memory runs plus 5 formal H100 paper-reference runs**, each lasting 300 rounds, for **24,000 formal rounds**. The original 45 runs remain unchanged. The new paper condition supplies five fresh independent runs, including labels r1–r3; it does not modify historical trajectories or relabel pilots.

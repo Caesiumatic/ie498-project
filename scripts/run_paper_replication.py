@@ -9,8 +9,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from ie498.cli import load_env
-from ie498.paper_execution import DATA_ROOT, TRANSPORTS, audit, execute, open_store, plan, prepare, status
+from ie498.paper_execution import DATA_ROOT, PROTOCOL, TRANSPORTS, audit, execute, open_store, plan, prepare, status
 from ie498.runner import coordinator_lock
+from ie498.storage import Store
 from ie498.subscription_auth import SubscriptionAuth
 
 
@@ -25,12 +26,21 @@ def main():
     if args.action == "preview":
         print(json.dumps(plan(args.transport), indent=2))
         return
+    if args.action == "status":
+        store = Store(args.data_root, readonly=True)
+        try:
+            store.db.execute("BEGIN")
+            row = store.rows("SELECT value FROM settings WHERE key='paper_protocol'")
+            if not row or row[0]["value"] != PROTOCOL:
+                raise ValueError("Not an independent paper-replication database")
+            print(json.dumps(status(store), indent=2))
+        finally:
+            store.close()
+        return
     store = open_store(args.data_root)
     try:
         with coordinator_lock(store):
-            if args.action == "status":
-                print(json.dumps(status(store), indent=2))
-            elif args.action == "audit":
+            if args.action == "audit":
                 print(json.dumps(audit(store), indent=2))
             else:
                 manifest = prepare(store, args.transport)
