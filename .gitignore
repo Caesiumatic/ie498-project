@@ -21,3 +21,4 @@ reports/progress/
 reports/delivery_manifest.json
 reports/*.log
 reports/restore_verification.json
+reports/paper_replication/delivery_receipt.json

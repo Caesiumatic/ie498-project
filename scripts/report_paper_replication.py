@@ -13,6 +13,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import sqlite3
 import sys
 
@@ -63,6 +64,132 @@ MANIFEST_FIELDS = (
     "reconstruction_policies", "explicit_differences", "documented_deviations",
     "transport", "source_hashes", "sampling_limitations", "reconstruction_limitations",
 )
+PUBLIC_MANIFEST_FIELDS = MANIFEST_FIELDS + (
+    "protocol", "scope", "total_rounds", "successful_seller_calls", "request_concurrency",
+    "code_commit", "created_utc", "pricing_source",
+)
+PUBLIC_CONFIG_FIELDS = (
+    "protocol", "protocol_version", "architecture", "prefix", "alpha", "ceiling_policy",
+    "T", "H", "model", "reasoning_effort", "transport", "temperature", "top_p",
+    "maximum_consecutive_malformed_outputs", "transport_failures_before_pause", "budget_usd",
+    "provider", "interface", "transport_version",
+)
+REPORT_FILES = (
+    "report.md", "run_summary.csv", "rounds.csv", "trajectories.png", "final50.png", "protocol_manifest.json",
+)
+ACCEPTED_FIELDS = (
+    "id", "call_id", "attempt", "run_id", "t", "agent", "purpose", "request_hash", "raw_path", "raw_sha256",
+)
+
+
+def _json_fingerprint(value):
+    canonical = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def fingerprint_runs(runs, histories):
+    """Hash a consistent scientific run/history snapshot without exporting it.
+
+    Accept either an ID-indexed mapping or rows from SQLite; configurations may
+    already be decoded. The same helper is shared with final packaging.
+    """
+    rows = runs.values() if isinstance(runs, dict) else runs
+    scientific = []
+    for row in rows:
+        config = json.loads(row["config"]) if isinstance(row["config"], str) else row["config"]
+        scientific.append({
+            "id": row["id"], "status": row["status"], "prompt_hash": row.get("prompt_hash"),
+            "commit_hash": row.get("commit_hash"), "parent": row.get("parent"), "checkpoint": row.get("checkpoint", 0),
+            "config": {key: config[key] for key in PUBLIC_CONFIG_FIELDS if key in config},
+        })
+    scientific.sort(key=lambda row: row["id"])
+    return _json_fingerprint({"schema": "ie498-paper-report-input-v1", "runs": scientific,
+                              "histories": {row["id"]: histories.get(row["id"], []) for row in scientific}})
+
+
+def fingerprint_accepted(attempts):
+    """Hash accepted-response provenance, excluding request/response contents."""
+    records = [{field: row.get(field) for field in ACCEPTED_FIELDS} for row in attempts]
+    records.sort(key=lambda row: (str(row["call_id"]), row["attempt"] or 0, str(row["id"])))
+    return _json_fingerprint(records)
+
+
+def fingerprint_sampling(sampling):
+    return _json_fingerprint({run_id: row["accepted_response_fingerprint"] for run_id, row in sampling.items()})
+
+
+def public_protocol_manifest(manifest, source_manifest_hash=None):
+    """Export only named scientific fields, including nested records.
+
+    The original manifest remains untouched. Unknown keys in run configurations,
+    amendments, hash maps, or policy objects cannot enter the public artifact.
+    """
+    expected_ids = {row[0] for row in EXPECTED}
+
+    def scalar(value):
+        return value is None or isinstance(value, (str, bool, int)) or (isinstance(value, float) and math.isfinite(value))
+
+    def source_hashes(value):
+        if not isinstance(value, dict):
+            return {}
+        return {name: sha for name, sha in value.items()
+                if isinstance(name, str) and ".." not in Path(name).parts
+                and name.startswith(("docs/sources/", "src/ie498/", "experiments/paper_replication/prompts/"))
+                and Path(name).suffix in (".pdf", ".txt", ".py", ".json")
+                and isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{64}", sha)}
+
+    exported = {"export_schema": "ie498-paper-scientific-manifest-v1",
+                "source_manifest_available": source_manifest_hash is not None}
+    if source_manifest_hash:
+        exported["source_manifest_sha256"] = source_manifest_hash
+    for field in PUBLIC_MANIFEST_FIELDS:
+        if field not in manifest:
+            continue
+        value = manifest[field]
+        if field == "source_hashes":
+            exported[field] = source_hashes(value)
+        elif field == "prompt_hashes" and isinstance(value, dict):
+            exported[field] = {name: sha for name, sha in value.items()
+                               if name in ("p0.txt", "p1.txt", "p2.txt", "template.txt")
+                               and isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{64}", sha)}
+        elif field in ("reconstruction_policies", "render_policy", "rendering_policy") and isinstance(value, dict):
+            exported[field] = {key: item for key, item in value.items()
+                               if key in RECONSTRUCTION_POLICIES and scalar(item)}
+        elif scalar(value):
+            exported[field] = value
+        elif isinstance(value, list):
+            exported[field] = [item for item in value if scalar(item)]
+    if isinstance(manifest.get("api_pricing_per_million_tokens"), dict):
+        exported["api_pricing_per_million_tokens"] = {
+            key: value for key, value in manifest["api_pricing_per_million_tokens"].items()
+            if key in ("input", "cached_input", "cache_write", "output")
+            and isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+        }
+    exported["runs"] = []
+    for row in manifest.get("runs", []):
+        if not isinstance(row, dict) or row.get("id") not in expected_ids or not isinstance(row.get("config"), dict):
+            continue
+        config = {key: value for key, value in row["config"].items()
+                  if key in PUBLIC_CONFIG_FIELDS and scalar(value)}
+        exported["runs"].append({"id": row["id"], "config": config})
+    exported["runtime_amendments"] = []
+    for amendment in manifest.get("runtime_amendments", []):
+        if not isinstance(amendment, dict):
+            continue
+        record = {key: value for key, value in amendment.items()
+                  if key in ("date_utc", "change", "code_commit", "unchanged_request_and_state_functions_verified",
+                             "request_concurrency", "previous_request_concurrency") and scalar(value)}
+        prior = amendment.get("prior_manifest")
+        if isinstance(prior, str) and Path(prior).name == prior:
+            record["prior_manifest"] = prior
+        if isinstance(amendment.get("checkpoints"), dict):
+            record["checkpoints"] = {key: value for key, value in amendment["checkpoints"].items()
+                                     if key in expected_ids and type(value) is int and 0 <= value <= PERIODS}
+        for field in ("old_source_hashes", "new_source_hashes"):
+            if field in amendment:
+                record[field] = source_hashes(amendment[field])
+        exported["runtime_amendments"].append(record)
+    return exported
 
 
 def _sha256(path):
@@ -147,7 +274,11 @@ def load_runs(data_root):
             fields = ("temperature", "top_p", "reasoning_effort")
             values = {field: set() for field in fields}
             missing = {field: 0 for field in fields}
-            for attempt in db.execute("SELECT raw_path,raw_sha256 FROM api_attempts WHERE run_id=? AND status='accepted'", (run_id,)):
+            accepted = [dict(row) for row in db.execute(
+                "SELECT " + ",".join(ACCEPTED_FIELDS) + " FROM api_attempts WHERE run_id=? AND status='accepted'",
+                (run_id,))]
+            observed["accepted_response_fingerprint"] = fingerprint_accepted(accepted)
+            for attempt in accepted:
                 observed["accepted_calls"] += 1
                 response = {}
                 raw_path = attempt["raw_path"]
@@ -306,39 +437,59 @@ def plot_endpoints(summary, destination):
     complete = summary[summary.complete]
     benchmark = PaperCondition("P1", 1.0, "footnote_18").market.benchmarks()
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
+    panels = (
+        ("price", "mean_normalized_price_firm1", "mean_normalized_price_firm2",
+         "Mean normalized prices", "Firm 1: mean price / alpha", "Firm 2: mean price / alpha"),
+        ("profit", "mean_normalized_profit_difference", "mean_normalized_total_profit",
+         "Mean normalized profit difference and sum",
+         "Mean profit difference (Firm 1 − Firm 2) / alpha", "Mean total profit (Firm 1 + Firm 2) / alpha"),
+    )
     for prefix, marker, color in (("P1", "s", "#2468ae"), ("P2", "^", "#dc7523")):
         group = complete[complete.prefix == prefix]
-        for ax, metric in zip(axes, ("price", "profit")):
-            ax.scatter(group[f"mean_normalized_{metric}_firm1"], group[f"mean_normalized_{metric}_firm2"],
+        for ax, (_, x_field, y_field, _, _, _) in zip(axes, panels):
+            ax.scatter(group[x_field], group[y_field],
                        marker=marker, color=color, s=65, edgecolors="white", linewidth=.6, label=prefix, zorder=4)
-    for ax, metric, title in zip(axes, ("price", "profit"), ("Mean normalized prices", "Mean normalized profits")):
+    for ax, (metric, x_field, y_field, title, xlabel, ylabel) in zip(axes, panels):
         nash = benchmark[f"nash_{metric}"]
         joint = benchmark[f"joint_{metric}"]
-        ax.axvline(nash[0], color="#444444", ls="--", lw=1)
-        ax.axhline(nash[1], color="#444444", ls="--", lw=1, label="Nash per firm")
-        ax.scatter([joint[0]], [joint[1]], marker="x", color="#2b8846", s=60, label="Symmetric joint optimum")
-        ax.margins(x=.12, y=.17)
         if metric == "price":
+            ax.axvline(nash[0], color="#444444", ls="--", lw=1)
+            ax.axhline(nash[1], color="#444444", ls="--", lw=1, label="Nash per firm")
+            ax.scatter([joint[0]], [joint[1]], marker="x", color="#2b8846", s=60, label="Symmetric joint optimum")
+            ax.margins(x=.12, y=.17)
             ax.axvline(joint[0], color="#2b8846", ls=":", lw=1)
             ax.axhline(joint[1], color="#2b8846", ls=":", lw=1)
         else:
-            left, right = ax.get_xlim()
-            bottom, top = ax.get_ylim()
+            # Paper Figure 2 uses D=pi_1-pi_2 and S=pi_1+pi_2.
+            # Holding Firm 1's profit at Nash gives S=2*pi_Nash_1-D;
+            # holding Firm 2's profit at Nash gives S=2*pi_Nash_2+D.
+            ax.scatter([0], [sum(joint)], marker="x", color="#2b8846", s=60,
+                       label="Symmetric joint optimum")
+            ax.axhline(sum(joint), color="#2b8846", ls=":", lw=1.2, label="Joint-monopoly total profit")
+            differences = complete[x_field].to_numpy(dtype=float)
+            totals = complete[y_field].to_numpy(dtype=float)
+            left = min(-1., float(differences.min())) if len(differences) else -1.
+            right = max(1., float(differences.max())) if len(differences) else 1.
+            padding = .15 * (right - left)
+            left, right = left - padding, right + padding
+            bottom = min(sum(nash), float(totals.min())) if len(totals) else sum(nash)
+            top = max(sum(joint), float(totals.max())) if len(totals) else sum(joint)
+            padding = .17 * max(1., top - bottom)
+            bottom, top = bottom - padding, top + padding
             xs = np.linspace(left, right, 150)
-            for total, color, style, label in (
-                (sum(nash), "#444444", "-.", "Nash total profit"),
-                (sum(joint), "#2b8846", ":", "Maximum total profit"),
+            for ys, label in (
+                (2 * nash[0] - xs, "Firm 1 profit = Nash"),
+                (2 * nash[1] + xs, "Firm 2 profit = Nash"),
             ):
-                ys = total - xs
                 mask = (ys >= bottom) & (ys <= top)
-                ax.plot(xs[mask], ys[mask], color=color, ls=style, lw=1, label=label)
+                ax.plot(xs[mask], ys[mask], color="#be4545", ls="--", lw=1, label=label)
             ax.set_xlim(left, right)
             ax.set_ylim(bottom, top)
         if complete.empty:
             ax.text(.5, .85, "No completed 300-period runs", transform=ax.transAxes, ha="center")
         left, right = ax.get_xlim()
         for _, row in complete.iterrows():
-            x, y = row[f"mean_normalized_{metric}_firm1"], row[f"mean_normalized_{metric}_firm2"]
+            x, y = row[x_field], row[y_field]
             rank = (1., 3.2, 10.).index(row.alpha)
             dy = 8 + 13 * rank if row.prefix == "P1" else -15 - 13 * rank
             toward_left = x > left + .8 * (right - left)
@@ -346,7 +497,7 @@ def plot_endpoints(summary, destination):
                         textcoords="offset points", fontsize=8, ha="right" if toward_left else "left",
                         color="#2468ae" if row.prefix == "P1" else "#dc7523",
                         arrowprops={"arrowstyle": "-", "lw": .4, "color": "#aaaaaa"})
-        ax.set(xlabel=f"Firm 1: {metric} / alpha", ylabel=f"Firm 2: {metric} / alpha", title=title)
+        ax.set(xlabel=xlabel, ylabel=ylabel, title=title)
         ax.grid(alpha=.15)
         ax.legend(fontsize=8, loc="best")
     qualifier = "complete suite" if len(complete) == len(EXPECTED) else f"INCOMPLETE suite: {len(complete)}/6 endpoints"
@@ -425,8 +576,12 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
                            "mean_normalized_total_profit", "mean_normalized_profit_difference"],
                ["Prefix", "alpha", "Raw profit 1", "Raw profit 2", "Profit 1 / alpha", "Profit 2 / alpha", "Total / alpha", "Normalized difference"]),
         "![Completed-run normalized endpoint comparison](final50.png)\n",
-        "Each point is one completed run, labeled by currency scale. The profit panel "
-        "shows firm-specific profits and constant-total-profit benchmark lines. These "
+        "Each point is one completed run, labeled by currency scale. Following the paper's "
+        "Figure 2, the right panel places normalized mean profit difference (Firm 1 minus "
+        "Firm 2) on the horizontal axis and normalized mean total profit on the vertical "
+        "axis. Its red dashed lines hold one firm's profit at its Nash value: "
+        "S = 2*pi_Nash_1 − D and S = 2*pi_Nash_2 + D. The green horizontal line marks "
+        "joint-monopoly total profit, with its symmetric allocation at D = 0. These "
         "benchmarks are calculated from the demand model, not inferred from the observed "
         "paths. High prices by themselves need not imply high profits.\n",
     ]
@@ -445,6 +600,19 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
                   "These are differences between two sampled trajectories at each scale. They do "
                   "not establish a stable prompt effect or reproduce the original study's "
                   "21-run-per-prefix statistical evidence.\n"]
+        for row in comparisons:
+            def direction(value):
+                return "higher than" if value > 1e-10 else "lower than" if value < -1e-10 else "equal, within numerical precision, to"
+
+            parts.append(f"At alpha = {row['alpha']:g}, P1's two-firm mean normalized price is "
+                         f"{direction(row['price_difference'])} P2's "
+                         f"(P1 − P2 = {row['price_difference']:.5f}), and its mean normalized "
+                         f"total profit is {direction(row['profit_difference'])} P2's "
+                         f"(P1 − P2 = {row['profit_difference']:.5f}).\n")
+        parts.append("The paper reported higher prices and total profits with P1 than P2 in "
+                     "its multi-run sample. The directions above describe only this six-run "
+                     "reconstruction; matching directions would not reproduce the paper's "
+                     "statistical evidence, and opposite directions must remain reported.\n")
     parts.append("## Source, prompt rendering, and interface limitations\n")
     paper = ROOT / "docs/sources/paper-v6.pdf"
     if paper.is_file():
@@ -454,8 +622,12 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
                  "PDF text rendering and parsing choices are explicit reconstruction decisions, "
                  "not a claim of byte-for-byte reproduction of unpublished original code.\n")
     if manifest_path and manifest_path.is_file():
-        parts.append(f"Frozen execution manifest: [{manifest_path.name}]({_link(manifest_path, destination)}); "
-                     f"SHA-256 `{_sha256(manifest_path)}`.\n")
+        published_manifest = destination / "protocol_manifest.json"
+        parts.append("Published scientific protocol manifest: [protocol_manifest.json](protocol_manifest.json); "
+                     f"SHA-256 `{_sha256(published_manifest)}`. This is a whitelisted excerpt of the "
+                     "execution manifest, including scientific settings, source hashes, and recorded "
+                     "runtime amendments. The full original manifest and raw execution provenance "
+                     "remain in the local data archive; they are not modified or published by this report.\n")
         rows = []
         for field in MANIFEST_FIELDS:
             if field in manifest:
@@ -505,6 +677,10 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
               "- [rounds.csv](rounds.csv): saved periods, one row per firm, with raw and normalized values and completion labels.\n"
               "- [trajectories.png](trajectories.png): normalized price paths.\n"
               "- [final50.png](final50.png): completed-run endpoint comparisons.\n",
+              "- [protocol_manifest.json](protocol_manifest.json): published scientific manifest excerpt, "
+              "including any recorded runtime amendments and checkpoints.\n",
+              "- [build_receipt.json](build_receipt.json): written last; binds all six report artifacts "
+              "to the input snapshot and accepted-response provenance using SHA-256 hashes.\n",
               "The original memory-study report and data remain separate and unchanged.\n"]
     return "\n".join(parts)
 
@@ -512,7 +688,9 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
 def build_report(data_root, destination, manifest_path=None):
     data_root, destination = Path(data_root).resolve(), Path(destination).resolve()
     manifest_path = Path(manifest_path).resolve() if manifest_path else data_root / "manifest.json"
-    manifest = json.loads(manifest_path.read_text()) if manifest_path and manifest_path.is_file() else {}
+    manifest_bytes = manifest_path.read_bytes() if manifest_path and manifest_path.is_file() else None
+    source_manifest_hash = hashlib.sha256(manifest_bytes).hexdigest() if manifest_bytes is not None else None
+    manifest = json.loads(manifest_bytes) if manifest_bytes is not None else {}
     if not isinstance(manifest, dict):
         raise ValueError("The execution manifest must be a JSON object")
     runs, histories, sampling, has_database = load_runs(data_root)
@@ -523,14 +701,28 @@ def build_report(data_root, destination, manifest_path=None):
         if frozen and (run["config"] != frozen[run_id]["config"] or run["prompt_hash"] != manifest.get("prompt_hash")):
             raise ValueError(f"{run_id}: database differs from the frozen manifest")
     summary, rounds, _ = summarize(runs, histories, sampling)
+    data_fingerprint = fingerprint_runs(runs, histories)
+    accepted_fingerprint = fingerprint_sampling(sampling)
     destination.mkdir(parents=True, exist_ok=True)
     _csv(destination / "run_summary.csv", summary)
     _csv(destination / "rounds.csv", rounds)
     plot_trajectories(summary, histories, destination)
     plot_endpoints(summary, destination)
-    report = make_report(summary, histories, data_root, destination, manifest_path, manifest, has_database)
+    published = public_protocol_manifest(manifest, source_manifest_hash)
+    _atomic_text(destination / "protocol_manifest.json", json.dumps(published, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
+    report = make_report(summary, histories, data_root, destination, manifest_path, published, has_database)
     _atomic_text(destination / "report.md", report)
-    return {"complete_runs": int(summary.complete.sum()), "saved_periods": int(summary.rounds_completed.sum()),
+    complete_runs, saved_periods = int(summary.complete.sum()), int(summary.rounds_completed.sum())
+    receipt = {"schema": "ie498-paper-report-build-v1", "created_utc": datetime.now(timezone.utc).isoformat(),
+               "complete": complete_runs == len(EXPECTED), "complete_runs": complete_runs, "saved_periods": saved_periods,
+               "source_manifest_sha256": source_manifest_hash, "data_fingerprint": data_fingerprint,
+               "accepted_fingerprint": accepted_fingerprint,
+               "files": {name: _sha256(destination / name) for name in REPORT_FILES}}
+    # The only completion marker is replaced after every payload is written.
+    # A crash beforehand leaves either no receipt or a receipt whose hashes no
+    # longer match the partially replaced report, so packaging must reject it.
+    _atomic_text(destination / "build_receipt.json", json.dumps(receipt, indent=2, allow_nan=False) + "\n")
+    return {"complete_runs": complete_runs, "saved_periods": saved_periods,
             "report": str(destination / "report.md")}
 
 
