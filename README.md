@@ -2,7 +2,7 @@
 
 This repository contains two completed studies of repeated Bertrand duopoly with **GPT-6 Luna**: a six-condition reconstruction of the source paper's main experiment, and an earlier history-and-memory experiment. The earlier study crosses history windows `H={0,1,5,20,100}` with `clear/full/compressed` memory and includes a separate `paper_reference` condition.
 
-The runner records each decision, memory view, settlement, and transport outcome, and resumes interrupted runs by logical call ID. Start with the [new core-paper report](reports/paper_replication/report.md) or the [earlier memory-study report](reports/research_report.md); the [decision log](docs/decisions.md) records protocol choices.
+The runner records each decision, memory view, settlement, and transport outcome, and resumes interrupted runs by logical call ID. Start with the [new core-paper report](reports/paper_replication/report.md) ([PDF](reports/paper_replication/report.pdf), [standalone HTML](reports/paper_replication/report.html)) or the [earlier memory-study report](reports/research_report.md); the [decision log](docs/decisions.md) records protocol choices.
 
 ## Completed independent core-paper reconstruction
 

@@ -1,0 +1,28 @@
+{
+  "source_report": "report.md",
+  "source_sha256": "1d1f3fdc270687dd6e1f16372db34065e60242de2d39490f1d56d771dbe14f28",
+  "preview": false,
+  "commit": "b2ee872c3383bfa24bbfeb9868fa0d683268d669",
+  "assets": [
+    {
+      "source": "trajectories.png",
+      "sha256": "0037265d6d09046e453013f15625aadf8607c9937f23d134e9c5950fd1d8fbb9"
+    },
+    {
+      "source": "final50.png",
+      "sha256": "0e0bdee336ae7feac7efb1f44ecb4cadae50514042e31a153287bad71bb114f0"
+    }
+  ],
+  "relative_links_resolved": [
+    "https://github.com/Caesiumatic/ie498-project/blob/b2ee872c3383bfa24bbfeb9868fa0d683268d669/docs/paper_replication_source_search.md",
+    "https://github.com/Caesiumatic/ie498-project/blob/b2ee872c3383bfa24bbfeb9868fa0d683268d669/reports/paper_replication/protocol_manifest.json",
+    "https://github.com/Caesiumatic/ie498-project/blob/b2ee872c3383bfa24bbfeb9868fa0d683268d669/reports/paper_replication/run_summary.csv",
+    "https://github.com/Caesiumatic/ie498-project/blob/b2ee872c3383bfa24bbfeb9868fa0d683268d669/reports/paper_replication/rounds.csv",
+    "https://github.com/Caesiumatic/ie498-project/blob/b2ee872c3383bfa24bbfeb9868fa0d683268d669/reports/paper_replication/trajectories.png",
+    "https://github.com/Caesiumatic/ie498-project/blob/b2ee872c3383bfa24bbfeb9868fa0d683268d669/reports/paper_replication/final50.png",
+    "https://github.com/Caesiumatic/ie498-project/blob/b2ee872c3383bfa24bbfeb9868fa0d683268d669/reports/paper_replication/protocol_manifest.json",
+    "https://github.com/Caesiumatic/ie498-project/blob/b2ee872c3383bfa24bbfeb9868fa0d683268d669/reports/paper_replication/build_receipt.json"
+  ],
+  "html_sha256": "08577b6ed46f2dd60db5284d3ac2737e9fe9da5dbe13ba1d107aef2465e09f61",
+  "pdf_sha256": "63dbc34a5beb1821a9768e29d4582cc8a9c5e66791c94c406a0d2906b0ed5e60"
+}
