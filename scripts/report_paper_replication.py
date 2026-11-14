@@ -118,6 +118,44 @@ def fingerprint_sampling(sampling):
     return _json_fingerprint({run_id: row["accepted_response_fingerprint"] for run_id, row in sampling.items()})
 
 
+def _usage_unknown(attempt):
+    usage = attempt.get("usage")
+    if isinstance(usage, str):
+        usage = json.loads(usage)
+    if usage is None:
+        usage = {}
+    if not isinstance(usage, dict):
+        raise ValueError("Saved attempt usage must be a JSON object")
+    return usage.get("usage_unknown") is True
+
+
+def execution_quality(attempts):
+    """Count saved outcomes without exporting error messages or raw metadata."""
+    counts = {"attempts_total": len(attempts), "accepted_calls": 0, "invalid_attempts": 0,
+              "transport_error_attempts": 0, "pending_attempts": 0, "other_attempts": 0,
+              "unknown_usage_failures": 0}
+    categories = {"accepted": "accepted_calls", "invalid": "invalid_attempts",
+                  "transport_error": "transport_error_attempts", "pending": "pending_attempts"}
+    for attempt in attempts:
+        status = attempt.get("status")
+        counts[categories.get(status, "other_attempts")] += 1
+        if status not in ("accepted", "pending") and _usage_unknown(attempt):
+            counts["unknown_usage_failures"] += 1
+    return counts
+
+
+def fingerprint_execution(attempts):
+    """Bind all outcomes and the reported usage-unknown flag, including failures."""
+    records = [{**{field: row.get(field) for field in ACCEPTED_FIELDS},
+                "status": row.get("status"), "usage_unknown": _usage_unknown(row)} for row in attempts]
+    records.sort(key=lambda row: (str(row["call_id"]), row["attempt"] or 0, str(row["id"])))
+    return _json_fingerprint(records)
+
+
+def fingerprint_execution_summary(sampling):
+    return _json_fingerprint({run_id: row["execution_attempt_fingerprint"] for run_id, row in sampling.items()})
+
+
 def public_protocol_manifest(manifest, source_manifest_hash=None):
     """Export only named scientific fields, including nested records.
 
@@ -270,16 +308,17 @@ def load_runs(data_root):
             if run["status"] == "completed" and len(history) != PERIODS:
                 raise ValueError(f"{run_id}: completed status disagrees with period count")
             histories[run_id] = history
-            observed = {"accepted_calls": 0, "unavailable_response_files": 0}
+            attempts = [dict(row) for row in db.execute(
+                "SELECT " + ",".join(ACCEPTED_FIELDS + ("status", "usage")) + " FROM api_attempts WHERE run_id=?",
+                (run_id,))]
+            observed = {**execution_quality(attempts), "unavailable_response_files": 0,
+                        "execution_attempt_fingerprint": fingerprint_execution(attempts)}
             fields = ("temperature", "top_p", "reasoning_effort")
             values = {field: set() for field in fields}
             missing = {field: 0 for field in fields}
-            accepted = [dict(row) for row in db.execute(
-                "SELECT " + ",".join(ACCEPTED_FIELDS) + " FROM api_attempts WHERE run_id=? AND status='accepted'",
-                (run_id,))]
+            accepted = [row for row in attempts if row["status"] == "accepted"]
             observed["accepted_response_fingerprint"] = fingerprint_accepted(accepted)
             for attempt in accepted:
-                observed["accepted_calls"] += 1
                 response = {}
                 raw_path = attempt["raw_path"]
                 if raw_path:
@@ -559,6 +598,31 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
         "contradictory completed status, incorrect model/condition metadata, and mock "
         "providers are rejected. A completed run also requires 600 accepted seller "
         "calls and available, checksum-verified raw responses. Existing results are never altered.\n",
+        "## Execution quality\n",
+    ]
+    quality_columns = ["run_id", "attempts_total", "accepted_calls", "invalid_attempts",
+                       "transport_error_attempts", "pending_attempts", "other_attempts", "unknown_usage_failures"]
+    quality = summary.copy()
+    for column in quality_columns:
+        if column not in quality:
+            quality[column] = 0
+    quality[quality_columns[1:]] = quality[quality_columns[1:]].fillna(0).astype(int)
+    parts += [
+        _table(quality, quality_columns,
+               ["Run", "All attempts", "Accepted", "Invalid output", "Transport error", "Pending", "Other", "Failures with unknown usage"]),
+        "These counts come from the same read-only database snapshot as the trajectories. "
+        "`invalid` marks an output rejected by validation, such as a malformed completed "
+        "response with an unparseable template or price. `transport_error` marks a request "
+        "or stream failure, including an interrupted stream that did not yield an acceptable "
+        "completed response; it is not counted as a malformed completed output. `pending` "
+        "marks unresolved attempts at the snapshot, and `other` combines remaining saved "
+        "statuses, such as a protocol error. Raw error text is not published in this table.\n",
+        "Failures with unknown usage counts only non-accepted, non-pending attempts whose "
+        "saved `usage_unknown` flag is true; it is a subset of the failure columns, not an "
+        "additional attempt category. No missing usage is estimated. Accepted responses are "
+        "retained and reused only to recover the same logical call; an already accepted "
+        "response is not discarded or resampled because its price or strategy is unfavorable. "
+        "Rejected outputs and transport failures remain in the local audit archive.\n",
         "## Normalized price paths\n",
         "![Normalized price paths for all six conditions](trajectories.png)\n",
         "The shaded interval marks periods 251–300. Dashed lines show the static Nash "
@@ -680,7 +744,8 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
               "- [protocol_manifest.json](protocol_manifest.json): published scientific manifest excerpt, "
               "including any recorded runtime amendments and checkpoints.\n",
               "- [build_receipt.json](build_receipt.json): written last; binds all six report artifacts "
-              "to the input snapshot and accepted-response provenance using SHA-256 hashes.\n",
+              "to the input snapshot, accepted-response provenance, and all-attempt execution "
+              "metadata using SHA-256 hashes.\n",
               "The original memory-study report and data remain separate and unchanged.\n"]
     return "\n".join(parts)
 
@@ -703,6 +768,7 @@ def build_report(data_root, destination, manifest_path=None):
     summary, rounds, _ = summarize(runs, histories, sampling)
     data_fingerprint = fingerprint_runs(runs, histories)
     accepted_fingerprint = fingerprint_sampling(sampling)
+    execution_fingerprint = fingerprint_execution_summary(sampling)
     destination.mkdir(parents=True, exist_ok=True)
     _csv(destination / "run_summary.csv", summary)
     _csv(destination / "rounds.csv", rounds)
@@ -717,6 +783,7 @@ def build_report(data_root, destination, manifest_path=None):
                "complete": complete_runs == len(EXPECTED), "complete_runs": complete_runs, "saved_periods": saved_periods,
                "source_manifest_sha256": source_manifest_hash, "data_fingerprint": data_fingerprint,
                "accepted_fingerprint": accepted_fingerprint,
+               "execution_fingerprint": execution_fingerprint,
                "files": {name: _sha256(destination / name) for name in REPORT_FILES}}
     # The only completion marker is replaced after every payload is written.
     # A crash beforehand leaves either no receipt or a receipt whose hashes no

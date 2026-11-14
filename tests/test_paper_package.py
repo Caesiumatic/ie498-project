@@ -182,7 +182,7 @@ def completed_report_fixture(tmp_path):
         writer.writerows({"run_id": run, "complete": True, "rounds_completed": 300, "accepted_calls": 600}
                          for run in package.EXPECTED)
     atomic_json(reports / "protocol_manifest.json", {"source_manifest_sha256": package.sha256(manifest)})
-    fingerprints = {"data_fingerprint": "1" * 64, "accepted_fingerprint": "2" * 64}
+    fingerprints = {"data_fingerprint": "1" * 64, "accepted_fingerprint": "2" * 64, "execution_fingerprint": "3" * 64}
     atomic_json(reports / package.BUILD_RECEIPT, {
         "schema": "ie498-paper-report-build-v1", "complete": True, "complete_runs": 6, "saved_periods": 1800,
         "source_manifest_sha256": package.sha256(manifest), **fingerprints,
@@ -215,10 +215,10 @@ def test_missing_last_written_build_receipt_rejects_apparently_complete_outputs(
         package.require_final_report(reports, manifest, **fingerprints)
 
 
-@pytest.mark.parametrize("changed_input", ["data_fingerprint", "accepted_fingerprint"])
+@pytest.mark.parametrize("changed_input", ["data_fingerprint", "accepted_fingerprint", "execution_fingerprint"])
 def test_report_receipt_cannot_describe_different_history_or_accepted_evidence(tmp_path, changed_input):
     reports, manifest, fingerprints = completed_report_fixture(tmp_path)
-    fingerprints[changed_input] = "3" * 64
+    fingerprints[changed_input] = "f" * 64
     with pytest.raises(ValueError, match="stale relative to the experiment inputs"):
         package.require_final_report(reports, manifest, **fingerprints)
 
@@ -246,13 +246,47 @@ def test_packager_and_report_builder_fingerprint_the_same_database_inputs(tmp_pa
     try:
         runs, histories, sampling, _ = builder.load_runs(store.root)
         before = package.report_input_fingerprints(store)
-        assert before == (builder.fingerprint_runs(runs, histories), builder.fingerprint_sampling(sampling))
+        assert before == (builder.fingerprint_runs(runs, histories), builder.fingerprint_sampling(sampling),
+                          builder.fingerprint_execution_summary(sampling))
         # A sampling-metadata change leaves the market state unchanged but invalidates evidence freshness.
         raw["response"]["top_p"] = .5
         atomic_json(store.root / row["raw_path"], raw)
         store.finish_attempt(row["id"], "accepted", 0, parsed={"price": 1.8}, raw_path=row["raw_path"])
         after = package.report_input_fingerprints(store)
-        assert after[0] == before[0] and after[1] != before[1]
+        assert after[0] == before[0] and after[1] != before[1] and after[2] != before[2]
+    finally:
+        store.close()
+
+
+@pytest.mark.parametrize("change", ["failed_status", "usage_unknown"])
+def test_failed_attempt_changes_invalidate_report_even_with_identical_market_and_accepted_data(tmp_path, change):
+    store, row, _ = evidence_fixture(tmp_path)
+    config = {"prefix": "P1", "alpha": 1., "T": 300, "H": 100, "model": "gpt-6-luna",
+              "architecture": "paper_replication", "reasoning_effort": "none", "transport": "chatgpt_subscription"}
+    store.add_run(row["run_id"], config, "fixture-commit", "fixture-prompt")
+    store.reserve({**row, "attempt": 1, "reserved": 0})
+    store.finish_attempt(row["id"], "accepted", 0, parsed={"price": 1.8}, raw_path=row["raw_path"])
+    failed = {**row, "id": "failed-attempt", "call_id": f"{row['run_id']}:1:1:seller", "agent": 1, "attempt": 1, "reserved": 0}
+    store.reserve(failed)
+    store.finish_attempt(failed["id"], "transport_error", 0, {"usage_unknown": False})
+    try:
+        before = package.report_input_fingerprints(store)
+        reports, manifest, _ = completed_report_fixture(tmp_path)
+        names = ("data_fingerprint", "accepted_fingerprint", "execution_fingerprint")
+        receipt_path = reports / package.BUILD_RECEIPT
+        receipt = json.loads(receipt_path.read_text())
+        receipt.update(dict(zip(names, before)))
+        atomic_json(receipt_path, receipt)
+        package.require_final_report(reports, manifest, **dict(zip(names, before)))
+        with store.db:
+            if change == "failed_status":
+                store.db.execute("UPDATE api_attempts SET status='invalid' WHERE id=?", (failed["id"],))
+            else:
+                store.db.execute("UPDATE api_attempts SET usage=? WHERE id=?", (json.dumps({"usage_unknown": True}), failed["id"]))
+        after = package.report_input_fingerprints(store)
+        assert after[:2] == before[:2] and after[2] != before[2]
+        with pytest.raises(ValueError, match="stale relative to the experiment inputs"):
+            package.require_final_report(reports, manifest, **dict(zip(names, after)))
     finally:
         store.close()
 

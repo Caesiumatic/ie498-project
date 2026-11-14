@@ -144,18 +144,24 @@ def attempt_files(store, attempts, transport):
 
 
 def report_input_fingerprints(store):
-    """Use the report builder's canonical input hashes, including accepted raw evidence."""
+    """Bind market data, accepted evidence, and all execution outcomes to the report."""
     spec = spec_from_file_location("paper_report_delivery", ROOT / "scripts/report_paper_replication.py")
     builder = module_from_spec(spec)
     spec.loader.exec_module(builder)
     runs = {row["id"]: {**row, "config": json.loads(row["config"])} for row in store.rows("SELECT * FROM runs ORDER BY id")}
     histories = {run: store.history(run) for run in runs}
-    sampling = {run: {"accepted_response_fingerprint": builder.fingerprint_accepted(
-        store.rows("SELECT * FROM api_attempts WHERE run_id=? AND status='accepted' ORDER BY id", (run,)))} for run in runs}
-    return builder.fingerprint_runs(runs, histories), builder.fingerprint_sampling(sampling)
+    sampling = {}
+    for run in runs:
+        attempts = store.rows("SELECT * FROM api_attempts WHERE run_id=? ORDER BY id", (run,))
+        sampling[run] = {
+            "accepted_response_fingerprint": builder.fingerprint_accepted([row for row in attempts if row["status"] == "accepted"]),
+            "execution_attempt_fingerprint": builder.fingerprint_execution(attempts),
+        }
+    return (builder.fingerprint_runs(runs, histories), builder.fingerprint_sampling(sampling),
+            builder.fingerprint_execution_summary(sampling))
 
 
-def require_final_report(report_root, manifest_path, *, data_fingerprint, accepted_fingerprint):
+def require_final_report(report_root, manifest_path, *, data_fingerprint, accepted_fingerprint, execution_fingerprint):
     for name in REPORT_FILES:
         safe_file(report_root / name, report_root)
     receipt = json.loads(safe_file(report_root / BUILD_RECEIPT, report_root).read_text())
@@ -164,7 +170,8 @@ def require_final_report(report_root, manifest_path, *, data_fingerprint, accept
         raise ValueError("A last-written complete report build receipt is required")
     if (receipt.get("source_manifest_sha256") != sha256(manifest_path)
             or receipt.get("data_fingerprint") != data_fingerprint
-            or receipt.get("accepted_fingerprint") != accepted_fingerprint):
+            or receipt.get("accepted_fingerprint") != accepted_fingerprint
+            or receipt.get("execution_fingerprint") != execution_fingerprint):
         raise ValueError("Report build receipt is stale relative to the experiment inputs")
     if set(receipt.get("files", {})) != set(REPORT_FILES) or any(
             receipt["files"][name] != sha256(report_root / name) for name in REPORT_FILES):
@@ -307,9 +314,9 @@ def package(root=ROOT, *, data_root=None, report_root=None, output=None):
             manifest = json.loads((data_root / "manifest.json").read_text())
             attempts = require_complete(store, manifest)
             evidence = attempt_files(store, attempts, manifest["transport"])
-            data_fingerprint, accepted_fingerprint = report_input_fingerprints(store)
+            data_fingerprint, accepted_fingerprint, execution_fingerprint = report_input_fingerprints(store)
             require_final_report(report_root, data_root / "manifest.json", data_fingerprint=data_fingerprint,
-                                 accepted_fingerprint=accepted_fingerprint)
+                                 accepted_fingerprint=accepted_fingerprint, execution_fingerprint=execution_fingerprint)
             audited = audit(store)
             if not audited.get("passed") or audited.get("checked_calls") != 3600:
                 raise ValueError("A full successful paper audit is required")

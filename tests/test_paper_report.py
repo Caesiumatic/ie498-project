@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from ie498.paper_replication import PaperCondition, PaperDecision, settle_round
+from ie498.storage import Store, atomic_json
 
 
 _SPEC = spec_from_file_location(
@@ -165,6 +166,7 @@ def test_report_links_published_manifest_without_modifying_local_source(monkeypa
     assert receipt["source_manifest_sha256"] == report._sha256(source)
     assert receipt["data_fingerprint"] == report.fingerprint_runs({}, {})
     assert receipt["accepted_fingerprint"] == report.fingerprint_sampling({})
+    assert receipt["execution_fingerprint"] == report.fingerprint_execution_summary({})
     assert receipt["files"] == {name: report._sha256(out / name) for name in report.REPORT_FILES}
 
 
@@ -226,7 +228,8 @@ def test_interrupted_final_build_cannot_leave_a_valid_receipt_for_mixed_artifact
                 action["price"] *= alpha / 3.2
         runs[run_id], histories[run_id] = run, history
         sampling[run_id] = {"accepted_calls": 600, "unavailable_response_files": 0,
-                            "accepted_response_fingerprint": "f" * 64}
+                            "accepted_response_fingerprint": "f" * 64,
+                            "execution_attempt_fingerprint": "e" * 64}
     monkeypatch.setattr(report, "load_runs", lambda path: (runs, histories, sampling, True))
 
     def interrupt_before_markdown(path, content):
@@ -244,3 +247,53 @@ def test_interrupted_final_build_cannot_leave_a_valid_receipt_for_mixed_artifact
     assert receipt["complete"] is False
     assert receipt["files"]["run_summary.csv"] != report._sha256(out / "run_summary.csv")
     assert receipt["data_fingerprint"] != report.fingerprint_runs(runs, histories)
+
+
+def test_execution_quality_counts_failed_unknown_usage_without_publishing_errors(tmp_path):
+    run_id, run, _, _ = completed_fixture()
+    store = Store(tmp_path / "isolated", budget=None)
+    secret = "SYNTHETIC_PRIVATE_FAILURE_DETAIL"
+    try:
+        store.add_run(run_id, run["config"], "test-commit", "test-prompt")
+        outcomes = [("accepted", True), ("invalid", False), ("transport_error", True),
+                    ("transport_error", False), ("pending", True), ("protocol_error", True), ("invalid", True)]
+        for number, (status, unknown) in enumerate(outcomes, 1):
+            identifier = f"fixture-{number}"
+            store.reserve({"id": identifier, "call_id": f"{run_id}:{number}:0:seller", "attempt": 1,
+                           "run_id": run_id, "t": number, "agent": 0, "purpose": "seller",
+                           "request_hash": "test-request", "request_json": "{}", "reserved": 0})
+            raw_path = None
+            if status == "accepted":
+                raw_path = f"raw/{identifier}.json"
+                atomic_json(store.root / raw_path, {"response": {"temperature": 1., "top_p": .98,
+                                                                "reasoning": {"effort": "none"}}})
+            store.finish_attempt(identifier, status, 0, {"usage_unknown": unknown, "access_token": secret},
+                                 {}, raw_path, error=secret)
+        before = report._sha256(store.root / "experiments.sqlite")
+        runs, histories, sampling, _ = report.load_runs(store.root)
+        assert report._sha256(store.root / "experiments.sqlite") == before
+        quality = sampling[run_id]
+        expected = {"attempts_total": 7, "accepted_calls": 1, "invalid_attempts": 2,
+                    "transport_error_attempts": 2, "pending_attempts": 1, "other_attempts": 1,
+                    "unknown_usage_failures": 3}
+        assert {key: quality[key] for key in expected} == expected
+        assert secret not in json.dumps(sampling)
+        summary, _, _ = report.summarize(runs, histories, sampling)
+        text = report.make_report(summary, histories, store.root, tmp_path, None, {}, True)
+        assert "## Execution quality" in text and "interrupted stream" in text
+        assert "not discarded or resampled" in text
+        assert secret not in text
+
+        scientific = report.fingerprint_runs(runs, histories)
+        accepted = report.fingerprint_sampling(sampling)
+        execution = report.fingerprint_execution_summary(sampling)
+        # A failure-only accounting correction must invalidate execution reporting.
+        with store.db:
+            store.db.execute("UPDATE api_attempts SET usage=? WHERE id='fixture-3'", ('{"usage_unknown": false}',))
+        later_runs, later_histories, later_sampling, _ = report.load_runs(store.root)
+        assert later_sampling[run_id]["unknown_usage_failures"] == 2
+        assert report.fingerprint_runs(later_runs, later_histories) == scientific
+        assert report.fingerprint_sampling(later_sampling) == accepted
+        assert report.fingerprint_execution_summary(later_sampling) != execution
+    finally:
+        store.close()
