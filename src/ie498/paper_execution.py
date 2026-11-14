@@ -80,7 +80,7 @@ def plan(transport):
             "transport": transport, "created_utc": datetime.now(timezone.utc).isoformat(),
             "code_commit": git_commit(), "source_hashes": source_hashes(), "prompt_hash": prompt_hash(),
             "runs": configs, "total_rounds": 1800, "successful_seller_calls": 3600,
-            "request_concurrency": 6, "api_pricing_per_million_tokens": PRICES,
+            "request_concurrency": 12, "api_pricing_per_million_tokens": PRICES,
             "pricing_source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
             "sampling_limitations": ([] if transport == "api_key" else [
                 "Subscription interface prohibits explicit temperature and top_p.",
@@ -140,7 +140,8 @@ class PaperCaller:
         self.stop = asyncio.Event()
         self.sem = asyncio.Semaphore(manifest["request_concurrency"])
         self.client = client or httpx.AsyncClient(timeout=httpx.Timeout(180, connect=20),
-            follow_redirects=False, limits=httpx.Limits(max_connections=6, max_keepalive_connections=6))
+            follow_redirects=False, limits=httpx.Limits(max_connections=manifest["request_concurrency"],
+                                                       max_keepalive_connections=manifest["request_concurrency"]))
 
     def accept(self, row, raw):
         subscription = self.transport == "chatgpt_subscription"

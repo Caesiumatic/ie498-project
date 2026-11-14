@@ -1,8 +1,9 @@
 """Offline execution/recovery scenarios; all model transport is fake."""
 import asyncio
 from copy import deepcopy
-from dataclasses import asdict
 import json
+import subprocess
+import sys
 
 import httpx
 import pytest
@@ -355,3 +356,78 @@ def test_prepare_refuses_transport_source_or_saved_configuration_changes(store, 
         store.db.execute("UPDATE runs SET config=? WHERE id=?", (json.dumps(altered), item["id"]))
     with pytest.raises(ValueError, match="Saved run"):
         execution.prepare(store, "api_key")
+
+
+def test_execute_permanent_first_call_rejection_does_not_launch_other_conditions(store, monkeypatch):
+    manifest, first = prepared(store, "chatgpt_subscription")
+    requests = []
+    original_caller = execution.PaperCaller
+
+    async def handler(request):
+        requests.append(request)
+        return httpx.Response(429, json={"error": {"code": "subscription_sharing_usage_limit_exceeded"}})
+
+    def fake_caller(store_arg, manifest_arg, **kwargs):
+        return original_caller(store_arg, manifest_arg, **kwargs,
+                               client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+
+    monkeypatch.setattr(execution, "PaperCaller", fake_caller)
+    with pytest.raises(execution.ExecutionPause, match="Provider rejected"):
+        asyncio.run(execution.execute(store, manifest, auth=FakeAuth(), api_key="must-not-be-used"))
+    assert len(requests) == 1 and str(requests[0].url).endswith("/responses")
+    assert requests[0].headers["authorization"] == "Bearer test-only-oauth-token"
+    rows = store.rows("SELECT id,status FROM runs ORDER BY id")
+    assert next(r for r in rows if r["id"] == first["id"])["status"] == "paused"
+    assert [r["status"] for r in rows].count("planned") == 5
+    assert store.rows("SELECT status FROM api_attempts") == [{"status": "transport_error"}]
+    assert json.loads((store.root / "status.json").read_text())["rounds"] == 0
+
+
+@pytest.mark.parametrize("transport,credentials", [
+    ("api_key", {"auth": FakeAuth()}),
+    ("chatgpt_subscription", {"api_key": "must-not-be-used"}),
+])
+def test_missing_selected_credentials_never_fall_back_to_other_billing(store, transport, credentials):
+    manifest, _ = prepared(store, transport)
+    with pytest.raises(ValueError, match="no .*fallback"):
+        asyncio.run(execution.execute(store, manifest, **credentials))
+    assert store.rows("SELECT * FROM api_attempts") == []
+
+
+def test_runtime_source_change_pauses_before_any_model_request(store, monkeypatch):
+    manifest, item = prepared(store)
+    monkeypatch.setattr(execution, "source_hashes", lambda: {"test-source": "changed-after-prepare"})
+
+    async def handler(request):
+        pytest.fail("Changed frozen sources must not generate experimental requests")
+
+    async def scenario():
+        caller = caller_with_handler(store, manifest, handler)
+        try:
+            await execution.run_one(store, caller, item)
+        finally:
+            await caller.client.aclose()
+
+    asyncio.run(scenario())
+    assert store.rows("SELECT * FROM api_attempts") == []
+    row = store.rows("SELECT status,error FROM runs WHERE id=?", (item["id"],))[0]
+    assert row["status"] == "paused" and "Source changed" in row["error"]
+
+
+def test_cli_preparation_is_offline_and_uses_independent_database(tmp_path):
+    root = tmp_path / "cli-preparation"
+    result = subprocess.run([
+        sys.executable, str(execution.ROOT / "scripts/run_paper_replication.py"), "prepare",
+        "--transport", "chatgpt_subscription", "--data-root", str(root),
+    ], capture_output=True, text=True, check=True)
+    assert json.loads(result.stdout)["calls_made"] == 0
+    manifest = json.loads((root / "manifest.json").read_text())
+    assert {(r["config"]["prefix"], r["config"]["alpha"]) for r in manifest["runs"]} == {
+        (prefix, alpha) for prefix in ("P1", "P2") for alpha in (1, 3.2, 10)}
+    independent = execution.open_store(root)
+    try:
+        assert len(independent.rows("SELECT * FROM runs")) == 6
+        assert independent.rows("SELECT * FROM api_attempts") == []
+        assert independent.rows("SELECT * FROM rounds") == []
+    finally:
+        independent.close()

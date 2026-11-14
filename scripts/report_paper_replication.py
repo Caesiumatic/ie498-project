@@ -218,6 +218,8 @@ def summarize(runs, histories, sampling):
             row["textual_ceiling"] = round(condition.ceiling, 2)
             row["complete"] = run["status"] == "completed" and len(history) == PERIODS
             if row["complete"]:
+                if row.get("accepted_calls") != 2 * PERIODS or row.get("unavailable_response_files") != 0:
+                    raise ValueError(f"{run_id}: complete-run reporting requires 600 accepted calls with available raw responses")
                 metrics = normalized_final_metrics(condition, history)
                 prices = np.asarray([r["prices"] for r in history[-50:]], dtype=float)
                 profits = np.asarray([r["profits"] for r in history[-50:]], dtype=float)
@@ -309,15 +311,13 @@ def plot_endpoints(summary, destination):
         for ax, metric in zip(axes, ("price", "profit")):
             ax.scatter(group[f"mean_normalized_{metric}_firm1"], group[f"mean_normalized_{metric}_firm2"],
                        marker=marker, color=color, s=65, edgecolors="white", linewidth=.6, label=prefix, zorder=4)
-            for _, row in group.iterrows():
-                ax.annotate(f"a={row.alpha:g}", (row[f"mean_normalized_{metric}_firm1"], row[f"mean_normalized_{metric}_firm2"]),
-                            xytext=(5, 6 if prefix == "P1" else -13), textcoords="offset points", fontsize=8, color=color)
     for ax, metric, title in zip(axes, ("price", "profit"), ("Mean normalized prices", "Mean normalized profits")):
         nash = benchmark[f"nash_{metric}"]
         joint = benchmark[f"joint_{metric}"]
         ax.axvline(nash[0], color="#444444", ls="--", lw=1)
         ax.axhline(nash[1], color="#444444", ls="--", lw=1, label="Nash per firm")
         ax.scatter([joint[0]], [joint[1]], marker="x", color="#2b8846", s=60, label="Symmetric joint optimum")
+        ax.margins(x=.12, y=.17)
         if metric == "price":
             ax.axvline(joint[0], color="#2b8846", ls=":", lw=1)
             ax.axhline(joint[1], color="#2b8846", ls=":", lw=1)
@@ -336,6 +336,16 @@ def plot_endpoints(summary, destination):
             ax.set_ylim(bottom, top)
         if complete.empty:
             ax.text(.5, .85, "No completed 300-period runs", transform=ax.transAxes, ha="center")
+        left, right = ax.get_xlim()
+        for _, row in complete.iterrows():
+            x, y = row[f"mean_normalized_{metric}_firm1"], row[f"mean_normalized_{metric}_firm2"]
+            rank = (1., 3.2, 10.).index(row.alpha)
+            dy = 8 + 13 * rank if row.prefix == "P1" else -15 - 13 * rank
+            toward_left = x > left + .8 * (right - left)
+            ax.annotate(f"a={row.alpha:g}", (x, y), xytext=(-7 if toward_left else 7, dy),
+                        textcoords="offset points", fontsize=8, ha="right" if toward_left else "left",
+                        color="#2468ae" if row.prefix == "P1" else "#dc7523",
+                        arrowprops={"arrowstyle": "-", "lw": .4, "color": "#aaaaaa"})
         ax.set(xlabel=f"Firm 1: {metric} / alpha", ylabel=f"Firm 2: {metric} / alpha", title=title)
         ax.grid(alpha=.15)
         ax.legend(fontsize=8, loc="best")
@@ -396,7 +406,8 @@ def make_report(summary, histories, data_root, destination, manifest_path, manif
         f"Input: `{data_root.as_posix()}/experiments.sqlite`, opened with SQLite `mode=ro` "
         "and a consistent read transaction. Unknown run IDs, discontinuous rounds, "
         "contradictory completed status, incorrect model/condition metadata, and mock "
-        "providers are rejected. Existing results are never altered.\n",
+        "providers are rejected. A completed run also requires 600 accepted seller "
+        "calls and available, checksum-verified raw responses. Existing results are never altered.\n",
         "## Normalized price paths\n",
         "![Normalized price paths for all six conditions](trajectories.png)\n",
         "The shaded interval marks periods 251–300. Dashed lines show the static Nash "
